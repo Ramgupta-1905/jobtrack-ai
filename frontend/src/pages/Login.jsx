@@ -3,15 +3,50 @@ import { Link, useNavigate } from "react-router-dom";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate("/dashboard");
+
+    try {
+      const response = await fetch("http://localhost:8080/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "Invalid email or password");
+        return;
+      }
+
+      console.log("Login successful:", data);
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userId", data.userId);
+      localStorage.setItem("userName", data.name);
+      localStorage.setItem("userEmail", data.email);
+
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Unable to connect to the backend");
+    }
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-700 p-4">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4">
 
       {/* Background Glow */}
       <div className="absolute -left-40 -top-40 h-96 w-96 rounded-full bg-blue-500/20 blur-[120px]" />
@@ -31,16 +66,16 @@ export default function Login() {
         {/* Branding */}
         <div className="mb-8 flex flex-col items-center">
 
-          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-500 to-cyan-400 text-4xl font-bold shadow-2xl shadow-blue-500/40">
+          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-500 to-cyan-400 text-3xl font-bold shadow-2xl shadow-blue-500/40">
             J
           </div>
 
           <h1 className="mb-2 text-4xl font-bold tracking-tight text-white">
-            Welcome Back!
+            Welcome Back
           </h1>
 
           <p className="text-center text-sm leading-6 text-slate-300">
-            Continue your journey toward your next opportunity.
+            Login to continue managing your applications with JobTrack AI.
           </p>
 
         </div>
@@ -50,7 +85,6 @@ export default function Login() {
 
           {/* Email */}
           <div>
-
             <label
               htmlFor="email"
               className="mb-2 block text-sm font-medium text-slate-300"
@@ -61,15 +95,15 @@ export default function Login() {
             <input
               id="email"
               type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
               className="w-full rounded-xl border border-slate-600 bg-slate-800/70 px-4 py-3 text-white placeholder:text-slate-500 outline-none transition-all duration-300 hover:border-slate-500 focus:border-cyan-400 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-400/10"
             />
-
           </div>
 
           {/* Password */}
           <div>
-
             <label
               htmlFor="password"
               className="mb-2 block text-sm font-medium text-slate-300"
@@ -82,6 +116,8 @@ export default function Login() {
               <input
                 id="password"
                 type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 className="w-full rounded-xl border border-slate-600 bg-slate-800/70 px-4 py-3 pr-12 text-white placeholder:text-slate-500 outline-none transition-all duration-300 hover:border-slate-500 focus:border-cyan-400 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-400/10"
               />
@@ -95,36 +131,6 @@ export default function Login() {
               </button>
 
             </div>
-
-          </div>
-
-          {/* Remember + Forgot */}
-          <div className="flex items-center justify-between">
-
-            <div className="flex items-center gap-2">
-
-              <input
-                id="remember"
-                type="checkbox"
-                className="accent-cyan-400"
-              />
-
-              <label
-                htmlFor="remember"
-                className="text-sm text-slate-400"
-              >
-                Remember Me
-              </label>
-
-            </div>
-
-            <a
-              href="#"
-              className="text-sm font-medium text-cyan-300 transition hover:text-cyan-200"
-            >
-              Forgot Password?
-            </a>
-
           </div>
 
           {/* Button */}
@@ -132,7 +138,7 @@ export default function Login() {
             type="submit"
             className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 py-3 font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/30"
           >
-            Sign In
+            Login
           </button>
 
         </form>
@@ -153,7 +159,6 @@ export default function Login() {
         </div>
 
       </div>
-
     </div>
   );
 }
