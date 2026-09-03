@@ -11,6 +11,7 @@ import Settings from "./pages/Settings"
 import Interviews from "./pages/InterviewTracker";
 import Application from "./pages/Applications";
 import AIAssistant from "./pages/AIAssistant";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
       <Route path="/signup" element={<Signup />} />
 
       {/* Protected Layout */}
+      <Route element={<ProtectedRoute />}>
       <Route element={<MainLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="profile" element={<Profile />} />
@@ -39,6 +41,7 @@ function App() {
         <Route path="interviews" element={<Interviews />} />
          <Route path="applications" element={<Application />} />
          <Route path="/ai-assistant" element={<AIAssistant />} />
+      </Route>
       </Route>
     </Routes>
   );

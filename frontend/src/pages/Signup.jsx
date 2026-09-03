@@ -3,24 +3,65 @@ import { Link, useNavigate } from "react-router-dom";
 
 export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate("/dashboard");
+
+    setError("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        "http://localhost:8080/api/auth/signup",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            password,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Signup failed");
+      }
+
+      navigate("/login");
+
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-700 p-4">
 
-      {/* Background Glow */}
       <div className="absolute -left-40 -top-40 h-96 w-96 rounded-full bg-blue-500/20 blur-[120px]" />
       <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-cyan-400/20 blur-[120px]" />
 
-      {/* Signup Card */}
       <div className="relative w-full max-w-md rounded-3xl border border-white/15 bg-slate-900/80 p-8 shadow-2xl backdrop-blur-xl">
 
-        {/* Back */}
         <Link
           to="/"
           className="mb-6 inline-block text-slate-400 transition-all duration-300 hover:text-cyan-300"
@@ -28,7 +69,6 @@ export default function Signup() {
           ← Back to Home
         </Link>
 
-        {/* Branding */}
         <div className="mb-8 flex flex-col items-center">
 
           <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-500 to-cyan-400 text-3xl font-bold shadow-2xl shadow-blue-500/40">
@@ -45,12 +85,9 @@ export default function Signup() {
 
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
 
-          {/* Full Name */}
           <div>
-
             <label
               htmlFor="name"
               className="mb-2 block text-sm font-medium text-slate-300"
@@ -62,14 +99,14 @@ export default function Signup() {
               id="name"
               type="text"
               placeholder="Enter your full name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
               className="w-full rounded-xl border border-slate-600 bg-slate-800/70 px-4 py-3 text-white placeholder:text-slate-500 outline-none transition-all duration-300 hover:border-slate-500 focus:border-cyan-400 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-400/10"
             />
-
           </div>
 
-          {/* Email */}
           <div>
-
             <label
               htmlFor="email"
               className="mb-2 block text-sm font-medium text-slate-300"
@@ -81,14 +118,14 @@ export default function Signup() {
               id="email"
               type="email"
               placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
               className="w-full rounded-xl border border-slate-600 bg-slate-800/70 px-4 py-3 text-white placeholder:text-slate-500 outline-none transition-all duration-300 hover:border-slate-500 focus:border-cyan-400 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-400/10"
             />
-
           </div>
 
-          {/* Password */}
           <div>
-
             <label
               htmlFor="password"
               className="mb-2 block text-sm font-medium text-slate-300"
@@ -102,6 +139,9 @@ export default function Signup() {
                 id="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Create password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
                 className="w-full rounded-xl border border-slate-600 bg-slate-800/70 px-4 py-3 pr-12 text-white placeholder:text-slate-500 outline-none transition-all duration-300 hover:border-slate-500 focus:border-cyan-400 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-400/10"
               />
 
@@ -114,12 +154,9 @@ export default function Signup() {
               </button>
 
             </div>
-
           </div>
 
-          {/* Confirm Password */}
           <div>
-
             <label
               htmlFor="confirmPassword"
               className="mb-2 block text-sm font-medium text-slate-300"
@@ -133,6 +170,9 @@ export default function Signup() {
                 id="confirmPassword"
                 type={showPassword ? "text" : "password"}
                 placeholder="Confirm password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
                 className="w-full rounded-xl border border-slate-600 bg-slate-800/70 px-4 py-3 pr-12 text-white placeholder:text-slate-500 outline-none transition-all duration-300 hover:border-slate-500 focus:border-cyan-400 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-400/10"
               />
 
@@ -145,20 +185,24 @@ export default function Signup() {
               </button>
 
             </div>
-
           </div>
 
-          {/* Button */}
+          {error && (
+            <p className="rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+              {error}
+            </p>
+          )}
+
           <button
             type="submit"
-            className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 py-3 font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/30"
+            disabled={loading}
+            className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 py-3 font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Create Account
+            {loading ? "Creating Account..." : "Create Account"}
           </button>
 
         </form>
 
-        {/* Footer */}
         <div className="mt-6 text-center text-sm text-slate-400">
 
           <p>
