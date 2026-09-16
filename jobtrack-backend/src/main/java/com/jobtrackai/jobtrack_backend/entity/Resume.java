@@ -12,27 +12,28 @@ public class Resume {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Title entered by the user
     @Column(nullable = false)
     private String title;
 
-    // Original file name selected by the user
     @Column(nullable = false)
     private String originalFileName;
 
-    // Unique name used internally on the server
     @Column(nullable = false, unique = true)
     private String storedFileName;
 
-    // Internal location of the uploaded file
-    @Column(nullable = false)
-    private String filePath;
+    @Column(
+            name = "file_data",
+            nullable = false,
+            columnDefinition = "bytea"
+    )
+    private byte[] fileData;
 
-    // Upload date shown on the frontend
+    @Column(name = "file_type", nullable = false)
+    private String fileType;
+
     @Column(nullable = false)
     private LocalDateTime uploadedAt;
 
-    // Resume owner
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -44,14 +45,16 @@ public class Resume {
             String title,
             String originalFileName,
             String storedFileName,
-            String filePath,
+            byte[] fileData,
+            String fileType,
             LocalDateTime uploadedAt,
             User user
     ) {
         this.title = title;
         this.originalFileName = originalFileName;
         this.storedFileName = storedFileName;
-        this.filePath = filePath;
+        this.fileData = fileData;
+        this.fileType = fileType;
         this.uploadedAt = uploadedAt;
         this.user = user;
     }
@@ -72,8 +75,12 @@ public class Resume {
         return storedFileName;
     }
 
-    public String getFilePath() {
-        return filePath;
+    public byte[] getFileData() {
+        return fileData;
+    }
+
+    public String getFileType() {
+        return fileType;
     }
 
     public LocalDateTime getUploadedAt() {
@@ -96,8 +103,12 @@ public class Resume {
         this.storedFileName = storedFileName;
     }
 
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
+    public void setFileData(byte[] fileData) {
+        this.fileData = fileData;
+    }
+
+    public void setFileType(String fileType) {
+        this.fileType = fileType;
     }
 
     public void setUploadedAt(LocalDateTime uploadedAt) {

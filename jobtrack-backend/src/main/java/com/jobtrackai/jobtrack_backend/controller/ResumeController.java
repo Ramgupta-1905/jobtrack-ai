@@ -54,9 +54,6 @@ public class ResumeController {
 
     /*
      * Rename a resume
-     *
-     * Example:
-     * PUT /api/resumes/1?title=Java Backend Resume
      */
     @PutMapping("/{id}")
     public ResponseEntity<ResumeResponse> renameResume(
@@ -84,21 +81,29 @@ public class ResumeController {
     }
 
     /*
-     * Download/open a resume
+     * Download/open a resume stored in the database
      */
     @GetMapping("/{id}/download")
-    public ResponseEntity<Resource> openResume(@PathVariable("id") Long id) {
-        Resource resource = resumeService.loadResumeFile(id);
+    public ResponseEntity<Resource> openResume(
+            @PathVariable("id") Long id
+    ) {
+
+        Resource resource =
+                resumeService.loadResumeFile(id);
 
         HttpHeaders headers = new HttpHeaders();
 
         headers.setContentDisposition(
                 ContentDisposition.inline()
-                        .filename(resource.getFilename())
+                        .filename(resource.getFilename() != null
+                                ? resource.getFilename()
+                                : "resume")
                         .build()
         );
 
-        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentType(
+                MediaType.APPLICATION_OCTET_STREAM
+        );
 
         return ResponseEntity.ok()
                 .headers(headers)

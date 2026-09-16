@@ -5,19 +5,14 @@ import com.jobtrackai.jobtrack_backend.entity.Resume;
 import com.jobtrackai.jobtrack_backend.entity.User;
 import com.jobtrackai.jobtrack_backend.repository.ResumeRepository;
 import com.jobtrackai.jobtrack_backend.repository.UserRepository;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -28,24 +23,12 @@ public class ResumeService {
     private final ResumeRepository resumeRepository;
     private final UserRepository userRepository;
 
-    private final Path uploadDirectory =
-            Paths.get("uploads/resumes").toAbsolutePath().normalize();
-
     public ResumeService(
             ResumeRepository resumeRepository,
             UserRepository userRepository
     ) {
         this.resumeRepository = resumeRepository;
         this.userRepository = userRepository;
-
-        try {
-            Files.createDirectories(uploadDirectory);
-        } catch (IOException e) {
-            throw new RuntimeException(
-                    "Could not create resume upload directory",
-                    e
-            );
-        }
     }
 
     /*
@@ -66,7 +49,9 @@ public class ResumeService {
 
         String originalFileName = file.getOriginalFilename();
 
-        if (originalFileName == null || originalFileName.trim().isEmpty()) {
+        if (originalFileName == null
+                || originalFileName.trim().isEmpty()) {
+
             throw new RuntimeException("Invalid file name");
         }
 
@@ -75,36 +60,39 @@ public class ResumeService {
         User currentUser = getCurrentUser();
 
         String storedFileName =
-                UUID.randomUUID() + "_" + sanitizeFileName(originalFileName);
+                UUID.randomUUID()
+                        + "_"
+                        + sanitizeFileName(originalFileName);
 
-        Path targetLocation =
-                uploadDirectory.resolve(storedFileName);
+        String fileType = file.getContentType();
+
+        if (fileType == null || fileType.trim().isEmpty()) {
+            fileType = detectFileType(originalFileName);
+        }
 
         try {
-            Files.copy(
-                    file.getInputStream(),
-                    targetLocation,
-                    StandardCopyOption.REPLACE_EXISTING
+
+            Resume resume = new Resume(
+                    title.trim(),
+                    originalFileName,
+                    storedFileName,
+                    file.getBytes(),
+                    fileType,
+                    LocalDateTime.now(),
+                    currentUser
             );
+
+            Resume savedResume = resumeRepository.save(resume);
+
+            return ResumeResponse.fromEntity(savedResume);
+
         } catch (IOException e) {
+
             throw new RuntimeException(
-                    "Could not save resume file",
+                    "Could not read resume file",
                     e
             );
         }
-
-        Resume resume = new Resume(
-                title.trim(),
-                originalFileName,
-                storedFileName,
-                targetLocation.toString(),
-                LocalDateTime.now(),
-                currentUser
-        );
-
-        Resume savedResume = resumeRepository.save(resume);
-
-        return ResumeResponse.fromEntity(savedResume);
     }
 
     /*
@@ -167,23 +155,11 @@ public class ResumeService {
                         new RuntimeException("Resume not found")
                 );
 
-        try {
-            Path filePath = Paths.get(resume.getFilePath());
-
-            Files.deleteIfExists(filePath);
-
-        } catch (IOException e) {
-            throw new RuntimeException(
-                    "Could not delete resume file",
-                    e
-            );
-        }
-
         resumeRepository.delete(resume);
     }
 
     /*
-     * Load a resume file for download/opening
+     * Load a resume file from the database
      */
     public Resource loadResumeFile(Long resumeId) {
 
@@ -198,28 +174,23 @@ public class ResumeService {
                         new RuntimeException("Resume not found")
                 );
 
-        try {
-            Path filePath = Paths
-                    .get(resume.getFilePath())
-                    .toAbsolutePath()
-                    .normalize();
+        byte[] fileData = resume.getFileData();
 
-            Resource resource = new UrlResource(
-                    filePath.toUri()
-            );
-
-            if (!resource.exists() || !resource.isReadable()) {
-                throw new RuntimeException("Resume file not found");
-            }
-
-            return resource;
-
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(
-                    "Could not load resume file",
-                    e
-            );
+        if (fileData == null || fileData.length == 0) {
+            throw new RuntimeException("Resume file data not found");
         }
+
+        /*
+         * Override getFilename() so the controller can
+         * use the original uploaded filename.
+         */
+        return new ByteArrayResource(fileData) {
+
+            @Override
+            public String getFilename() {
+                return resume.getOriginalFileName();
+            }
+        };
     }
 
     /*
@@ -234,7 +205,8 @@ public class ResumeService {
 
         if (authentication == null
                 || !authentication.isAuthenticated()
-                || authentication.getName() == null) {
+                || authentication.getName() == null
+                || authentication.getName().equals("anonymousUser")) {
 
             throw new RuntimeException("User is not authenticated");
         }
@@ -269,14 +241,34 @@ public class ResumeService {
     }
 
     /*
-     * Prevent unsafe file names
+     * Detect MIME type when MultipartFile does not provide one
+     */
+    private String detectFileType(String fileName) {
+
+        String lowerCaseFileName =
+                fileName.toLowerCase();
+
+        if (lowerCaseFileName.endsWith(".pdf")) {
+            return "application/pdf";
+        }
+
+        if (lowerCaseFileName.endsWith(".doc")) {
+            return "application/msword";
+        }
+
+        if (lowerCaseFileName.endsWith(".docx")) {
+            return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        }
+
+        return "application/octet-stream";
+    }
+
+    /*
+     * Sanitize file name used for the internal stored name
      */
     private String sanitizeFileName(String fileName) {
 
-        return Paths
-                .get(fileName)
-                .getFileName()
-                .toString()
+        return fileName
                 .replaceAll("[^a-zA-Z0-9._-]", "_");
     }
 }
