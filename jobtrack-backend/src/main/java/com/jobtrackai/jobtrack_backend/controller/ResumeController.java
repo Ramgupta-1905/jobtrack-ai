@@ -1,19 +1,24 @@
 package com.jobtrackai.jobtrack_backend.controller;
 
 import com.jobtrackai.jobtrack_backend.dto.ResumeResponse;
+import com.jobtrackai.jobtrack_backend.entity.Resume;
 import com.jobtrackai.jobtrack_backend.service.ResumeService;
+
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/resumes")
+@CrossOrigin(origins = "http://localhost:5173")
 public class ResumeController {
 
     private final ResumeService resumeService;
@@ -22,57 +27,49 @@ public class ResumeController {
         this.resumeService = resumeService;
     }
 
-    /*
-     * Upload a resume
-     */
-    @PostMapping(
-            value = "/upload",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-    )
+    @PostMapping("/upload")
     public ResponseEntity<ResumeResponse> uploadResume(
-            @RequestParam("title") String title,
-            @RequestParam("file") MultipartFile file
-    ) {
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("title") String title
+    ) throws IOException {
 
-        ResumeResponse response =
-                resumeService.uploadResume(title, file);
+        Resume savedResume =
+                resumeService.uploadResume(file, title);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ResumeResponse.fromEntity(savedResume)
+        );
     }
 
-    /*
-     * Get all resumes of the logged-in user
-     */
     @GetMapping
     public ResponseEntity<List<ResumeResponse>> getMyResumes() {
 
         List<ResumeResponse> resumes =
-                resumeService.getMyResumes();
+                resumeService.getMyResumes()
+                        .stream()
+                        .map(ResumeResponse::fromEntity)
+                        .toList();
 
         return ResponseEntity.ok(resumes);
     }
 
-    /*
-     * Rename a resume
-     */
     @PutMapping("/{id}")
     public ResponseEntity<ResumeResponse> renameResume(
-            @PathVariable("id") Long id,
+            @PathVariable Long id,
             @RequestParam("title") String title
     ) {
 
-        ResumeResponse response =
+        Resume updatedResume =
                 resumeService.renameResume(id, title);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ResumeResponse.fromEntity(updatedResume)
+        );
     }
 
-    /*
-     * Delete a resume
-     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteResume(
-            @PathVariable("id") Long id
+            @PathVariable Long id
     ) {
 
         resumeService.deleteResume(id);
@@ -80,33 +77,36 @@ public class ResumeController {
         return ResponseEntity.noContent().build();
     }
 
-    /*
-     * Download/open a resume stored in the database
-     */
     @GetMapping("/{id}/download")
-    public ResponseEntity<Resource> openResume(
-            @PathVariable("id") Long id
+    public ResponseEntity<Resource> viewResume(
+            @PathVariable Long id
     ) {
 
-        Resource resource =
+        ResumeService.ResumeFile resumeFile =
                 resumeService.loadResumeFile(id);
 
-        HttpHeaders headers = new HttpHeaders();
+        MediaType mediaType;
 
-        headers.setContentDisposition(
-                ContentDisposition.inline()
-                        .filename(resource.getFilename() != null
-                                ? resource.getFilename()
-                                : "resume")
-                        .build()
-        );
+        try {
+            mediaType = MediaType.parseMediaType(
+                    resumeFile.contentType()
+            );
+        } catch (Exception exception) {
+            mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        }
 
-        headers.setContentType(
-                MediaType.APPLICATION_OCTET_STREAM
-        );
+        ContentDisposition contentDisposition =
+                ContentDisposition
+                        .inline()
+                        .filename(resumeFile.fileName())
+                        .build();
 
         return ResponseEntity.ok()
-                .headers(headers)
-                .body(resource);
+                .contentType(mediaType)
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        contentDisposition.toString()
+                )
+                .body(resumeFile.resource());
     }
 }

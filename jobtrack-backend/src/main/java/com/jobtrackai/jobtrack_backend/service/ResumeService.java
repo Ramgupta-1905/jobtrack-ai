@@ -1,14 +1,13 @@
 package com.jobtrackai.jobtrack_backend.service;
 
-import com.jobtrackai.jobtrack_backend.dto.ResumeResponse;
 import com.jobtrackai.jobtrack_backend.entity.Resume;
 import com.jobtrackai.jobtrack_backend.entity.User;
 import com.jobtrackai.jobtrack_backend.repository.ResumeRepository;
 import com.jobtrackai.jobtrack_backend.repository.UserRepository;
+
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,94 +30,78 @@ public class ResumeService {
         this.userRepository = userRepository;
     }
 
-    /*
-     * Upload a new resume
-     */
-    public ResumeResponse uploadResume(
-            String title,
-            MultipartFile file
-    ) {
+    public Resume uploadResume(
+            MultipartFile file,
+            String title
+    ) throws IOException {
+
+        if (file == null || file.isEmpty()) {
+            throw new RuntimeException("Resume file cannot be empty");
+        }
 
         if (title == null || title.trim().isEmpty()) {
             throw new RuntimeException("Resume title is required");
         }
 
-        if (file == null || file.isEmpty()) {
-            throw new RuntimeException("Please select a resume file");
-        }
-
         String originalFileName = file.getOriginalFilename();
 
-        if (originalFileName == null
-                || originalFileName.trim().isEmpty()) {
-
+        if (originalFileName == null || originalFileName.trim().isEmpty()) {
             throw new RuntimeException("Invalid file name");
         }
 
-        validateFileType(originalFileName);
-
-        User currentUser = getCurrentUser();
-
-        String storedFileName =
-                UUID.randomUUID()
-                        + "_"
-                        + sanitizeFileName(originalFileName);
-
         String fileType = file.getContentType();
 
-        if (fileType == null || fileType.trim().isEmpty()) {
-            fileType = detectFileType(originalFileName);
-        }
-
-        try {
-
-            Resume resume = new Resume(
-                    title.trim(),
-                    originalFileName,
-                    storedFileName,
-                    file.getBytes(),
-                    fileType,
-                    LocalDateTime.now(),
-                    currentUser
-            );
-
-            Resume savedResume = resumeRepository.save(resume);
-
-            return ResumeResponse.fromEntity(savedResume);
-
-        } catch (IOException e) {
-
+        if (!isAllowedFileType(fileType, originalFileName)) {
             throw new RuntimeException(
-                    "Could not read resume file",
-                    e
+                    "Only PDF, DOC, and DOCX files are allowed"
             );
         }
-    }
-
-    /*
-     * Get only the current user's resumes
-     */
-    public List<ResumeResponse> getMyResumes() {
 
         User currentUser = getCurrentUser();
 
-        return resumeRepository
-                .findByUserIdOrderByUploadedAtDesc(currentUser.getId())
-                .stream()
-                .map(ResumeResponse::fromEntity)
-                .toList();
+        Resume resume = new Resume();
+
+        resume.setTitle(title.trim());
+
+        resume.setOriginalFileName(originalFileName);
+
+        resume.setStoredFileName(
+                UUID.randomUUID()
+                        + "_"
+                        + sanitizeFileName(originalFileName)
+        );
+
+        resume.setFileData(file.getBytes());
+
+        resume.setFileType(
+                detectFileType(fileType, originalFileName)
+        );
+
+        resume.setUploadedAt(LocalDateTime.now());
+
+        resume.setUser(currentUser);
+
+        return resumeRepository.save(resume);
     }
 
-    /*
-     * Rename a resume owned by the current user
-     */
-    public ResumeResponse renameResume(
+    public List<Resume> getMyResumes() {
+
+        User currentUser = getCurrentUser();
+
+        return resumeRepository.findByUserIdOrderByUploadedAtDesc(
+                currentUser.getId()
+        );
+    }
+
+    public Resume renameResume(
             Long resumeId,
             String newTitle
     ) {
 
         if (newTitle == null || newTitle.trim().isEmpty()) {
-            throw new RuntimeException("Resume title is required");
+            throw new RuntimeException(
+                    "Resume title cannot be empty"
+            );
         }
 
         User currentUser = getCurrentUser();
@@ -134,14 +117,9 @@ public class ResumeService {
 
         resume.setTitle(newTitle.trim());
 
-        Resume updatedResume = resumeRepository.save(resume);
-
-        return ResumeResponse.fromEntity(updatedResume);
+        return resumeRepository.save(resume);
     }
 
-    /*
-     * Delete a resume owned by the current user
-     */
     public void deleteResume(Long resumeId) {
 
         User currentUser = getCurrentUser();
@@ -159,9 +137,10 @@ public class ResumeService {
     }
 
     /*
-     * Load a resume file from the database
+     * Loads the stored resume file for frontend preview.
+     * The frontend receives the file as a Blob.
      */
-    public Resource loadResumeFile(Long resumeId) {
+    public ResumeFile loadResumeFile(Long resumeId) {
 
         User currentUser = getCurrentUser();
 
@@ -174,41 +153,51 @@ public class ResumeService {
                         new RuntimeException("Resume not found")
                 );
 
-        byte[] fileData = resume.getFileData();
+        if (resume.getFileData() == null
+                || resume.getFileData().length == 0) {
 
-        if (fileData == null || fileData.length == 0) {
-            throw new RuntimeException("Resume file data not found");
+            throw new RuntimeException(
+                    "Resume file data is empty"
+            );
         }
 
-        /*
-         * Override getFilename() so the controller can
-         * use the original uploaded filename.
-         */
-        return new ByteArrayResource(fileData) {
+        ByteArrayResource resource =
+                new ByteArrayResource(
+                        resume.getFileData()
+                );
 
-            @Override
-            public String getFilename() {
-                return resume.getOriginalFileName();
-            }
-        };
+        String contentType = resume.getFileType();
+
+        if (contentType == null
+                || contentType.trim().isEmpty()) {
+
+            contentType = detectFileType(
+                    null,
+                    resume.getOriginalFileName()
+            );
+        }
+
+        return new ResumeFile(
+                resource,
+                resume.getOriginalFileName(),
+                contentType
+        );
     }
 
-    /*
-     * Get the currently authenticated user
-     */
     private User getCurrentUser() {
 
-        Authentication authentication =
+        var authentication =
                 SecurityContextHolder
                         .getContext()
                         .getAuthentication();
 
         if (authentication == null
                 || !authentication.isAuthenticated()
-                || authentication.getName() == null
-                || authentication.getName().equals("anonymousUser")) {
+                || authentication.getName() == null) {
 
-            throw new RuntimeException("User is not authenticated");
+            throw new RuntimeException(
+                    "User is not authenticated"
+            );
         }
 
         String email = authentication.getName();
@@ -216,34 +205,60 @@ public class ResumeService {
         return userRepository
                 .findByEmail(email)
                 .orElseThrow(() ->
-                        new RuntimeException("User not found")
+                        new UsernameNotFoundException(
+                                "User not found"
+                        )
                 );
     }
 
-    /*
-     * Allow only resume-related file formats
-     */
-    private void validateFileType(String fileName) {
+    private boolean isAllowedFileType(
+            String contentType,
+            String fileName
+    ) {
 
         String lowerCaseFileName =
                 fileName.toLowerCase();
 
-        boolean validFile =
+        boolean validExtension =
                 lowerCaseFileName.endsWith(".pdf")
                         || lowerCaseFileName.endsWith(".doc")
                         || lowerCaseFileName.endsWith(".docx");
 
-        if (!validFile) {
-            throw new RuntimeException(
-                    "Only PDF, DOC, and DOCX files are allowed"
-            );
-        }
+        /*
+         * Some browsers send application/octet-stream.
+         * Therefore, extension is treated as the main validation.
+         */
+        boolean validContentType =
+                contentType == null
+                        || contentType.trim().isEmpty()
+                        || "application/octet-stream".equalsIgnoreCase(
+                        contentType
+                )
+                        || "application/pdf".equalsIgnoreCase(
+                        contentType
+                )
+                        || "application/msword".equalsIgnoreCase(
+                        contentType
+                )
+                        || "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        .equalsIgnoreCase(contentType);
+
+        return validExtension && validContentType;
     }
 
-    /*
-     * Detect MIME type when MultipartFile does not provide one
-     */
-    private String detectFileType(String fileName) {
+    private String detectFileType(
+            String contentType,
+            String fileName
+    ) {
+
+        if (contentType != null
+                && !contentType.trim().isEmpty()
+                && !"application/octet-stream".equalsIgnoreCase(
+                contentType
+        )) {
+
+            return contentType;
+        }
 
         String lowerCaseFileName =
                 fileName.toLowerCase();
@@ -263,12 +278,21 @@ public class ResumeService {
         return "application/octet-stream";
     }
 
-    /*
-     * Sanitize file name used for the internal stored name
-     */
-    private String sanitizeFileName(String fileName) {
+    private String sanitizeFileName(
+            String fileName
+    ) {
 
         return fileName
-                .replaceAll("[^a-zA-Z0-9._-]", "_");
+                .replaceAll(
+                        "[^a-zA-Z0-9._-]",
+                        "_"
+                );
+    }
+
+    public record ResumeFile(
+            ByteArrayResource resource,
+            String fileName,
+            String contentType
+    ) {
     }
 }

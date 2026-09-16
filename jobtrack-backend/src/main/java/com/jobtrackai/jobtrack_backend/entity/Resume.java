@@ -1,5 +1,6 @@
 package com.jobtrackai.jobtrack_backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -21,6 +22,7 @@ public class Resume {
     @Column(nullable = false, unique = true)
     private String storedFileName;
 
+    @JsonIgnore
     @Column(
             name = "file_data",
             nullable = false,
@@ -34,6 +36,7 @@ public class Resume {
     @Column(nullable = false)
     private LocalDateTime uploadedAt;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

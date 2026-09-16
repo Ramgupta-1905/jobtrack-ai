@@ -27,6 +27,7 @@ public class ResumeResponse {
     }
 
     public static ResumeResponse fromEntity(Resume resume) {
+
         return new ResumeResponse(
                 resume.getId(),
                 resume.getTitle(),
