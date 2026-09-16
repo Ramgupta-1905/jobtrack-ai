@@ -1,26 +1,14 @@
-package com.jobtrackai.jobtrack_backend.entity;
+package com.jobtrackai.jobtrack_backend.dto;
 
-import jakarta.persistence.*;
-
-import java.util.ArrayList;
 import java.util.List;
 
-@Entity
-@Table(name = "users")
-public class User {
+public class ProfileResponse {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false, unique = true)
     private String email;
-
-    @Column(nullable = false)
-    private String password;
 
     // Personal Information
     private String username;
@@ -43,7 +31,6 @@ public class User {
     private Double cgpa;
 
     // About
-    @Column(length = 1000)
     private String bio;
 
     // Social and Portfolio Links
@@ -58,173 +45,157 @@ public class User {
     private String portfolioUrl;
 
     // Skills
-    @ElementCollection
-    @CollectionTable(
-            name = "user_skills",
-            joinColumns = @JoinColumn(name = "user_id")
-    )
-    @Column(name = "skill")
-    private List<String> skills = new ArrayList<>();
+    private List<String> skills;
 
-    public User() {
-    }
-
-    public User(String name, String email, String password) {
-        this.name = name;
-        this.email = email;
-        this.password = password;
+    public ProfileResponse() {
     }
 
     public Long getId() {
         return id;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getName() {
         return name;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public String getState() {
-        return state;
-    }
-
-    public String getCollege() {
-        return college;
-    }
-
-    public String getDegree() {
-        return degree;
-    }
-
-    public String getBranch() {
-        return branch;
-    }
-
-    public Integer getGraduationYear() {
-        return graduationYear;
-    }
-
-    public Double getCgpa() {
-        return cgpa;
-    }
-
-    public String getBio() {
-        return bio;
-    }
-
-    public String getGithubUrl() {
-        return githubUrl;
-    }
-
-    public String getLinkedinUrl() {
-        return linkedinUrl;
-    }
-
-    public String getLeetcodeUrl() {
-        return leetcodeUrl;
-    }
-
-    public String getGeeksforgeeksUrl() {
-        return geeksforgeeksUrl;
-    }
-
-    public String getPortfolioUrl() {
-        return portfolioUrl;
-    }
-
-    public List<String> getSkills() {
-        return skills;
     }
 
     public void setName(String name) {
         this.name = name;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
     public void setEmail(String email) {
         this.email = email;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public String getUsername() {
+        return username;
     }
 
     public void setUsername(String username) {
         this.username = username;
     }
 
+    public String getPhone() {
+        return phone;
+    }
+
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getCity() {
+        return city;
     }
 
     public void setCity(String city) {
         this.city = city;
     }
 
+    public String getState() {
+        return state;
+    }
+
     public void setState(String state) {
         this.state = state;
+    }
+
+    public String getCollege() {
+        return college;
     }
 
     public void setCollege(String college) {
         this.college = college;
     }
 
+    public String getDegree() {
+        return degree;
+    }
+
     public void setDegree(String degree) {
         this.degree = degree;
+    }
+
+    public String getBranch() {
+        return branch;
     }
 
     public void setBranch(String branch) {
         this.branch = branch;
     }
 
+    public Integer getGraduationYear() {
+        return graduationYear;
+    }
+
     public void setGraduationYear(Integer graduationYear) {
         this.graduationYear = graduationYear;
+    }
+
+    public Double getCgpa() {
+        return cgpa;
     }
 
     public void setCgpa(Double cgpa) {
         this.cgpa = cgpa;
     }
 
+    public String getBio() {
+        return bio;
+    }
+
     public void setBio(String bio) {
         this.bio = bio;
+    }
+
+    public String getGithubUrl() {
+        return githubUrl;
     }
 
     public void setGithubUrl(String githubUrl) {
         this.githubUrl = githubUrl;
     }
 
+    public String getLinkedinUrl() {
+        return linkedinUrl;
+    }
+
     public void setLinkedinUrl(String linkedinUrl) {
         this.linkedinUrl = linkedinUrl;
+    }
+
+    public String getLeetcodeUrl() {
+        return leetcodeUrl;
     }
 
     public void setLeetcodeUrl(String leetcodeUrl) {
         this.leetcodeUrl = leetcodeUrl;
     }
 
+    public String getGeeksforgeeksUrl() {
+        return geeksforgeeksUrl;
+    }
+
     public void setGeeksforgeeksUrl(String geeksforgeeksUrl) {
         this.geeksforgeeksUrl = geeksforgeeksUrl;
     }
 
+    public String getPortfolioUrl() {
+        return portfolioUrl;
+    }
+
     public void setPortfolioUrl(String portfolioUrl) {
         this.portfolioUrl = portfolioUrl;
+    }
+
+    public List<String> getSkills() {
+        return skills;
     }
 
     public void setSkills(List<String> skills) {
