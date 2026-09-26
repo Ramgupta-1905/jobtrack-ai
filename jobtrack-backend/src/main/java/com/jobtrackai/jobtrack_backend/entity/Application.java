@@ -3,6 +3,7 @@ package com.jobtrackai.jobtrack_backend.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,6 +47,12 @@ public class Application {
     private String stipend;
 
     private String experience;
+    private LocalDate interviewDate;
+    private LocalTime interviewTime;
+    private String interviewType;
+    private String interviewStatus;
+    private String interviewOutcome;
+    private String interviewNotes;
 
     @ElementCollection
     @CollectionTable(
@@ -234,5 +241,52 @@ public class Application {
 
     public void setUser(User user) {
         this.user = user;
+    }
+    public LocalDate getInterviewDate() {
+        return interviewDate;
+    }
+
+    public void setInterviewDate(LocalDate interviewDate) {
+        this.interviewDate = interviewDate;
+    }
+
+    public LocalTime getInterviewTime() {
+        return interviewTime;
+    }
+
+    public void setInterviewTime(LocalTime interviewTime) {
+        this.interviewTime = interviewTime;
+    }
+
+    public String getInterviewType() {
+        return interviewType;
+    }
+
+    public void setInterviewType(String interviewType) {
+        this.interviewType = interviewType;
+    }
+
+    public String getInterviewStatus() {
+        return interviewStatus;
+    }
+
+    public void setInterviewStatus(String interviewStatus) {
+        this.interviewStatus = interviewStatus;
+    }
+
+    public String getInterviewOutcome() {
+        return interviewOutcome;
+    }
+
+    public void setInterviewOutcome(String interviewOutcome) {
+        this.interviewOutcome = interviewOutcome;
+    }
+
+    public String getInterviewNotes() {
+        return interviewNotes;
+    }
+
+    public void setInterviewNotes(String interviewNotes) {
+        this.interviewNotes = interviewNotes;
     }
 }

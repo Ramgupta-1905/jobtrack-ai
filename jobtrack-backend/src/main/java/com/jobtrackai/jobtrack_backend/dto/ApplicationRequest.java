@@ -1,6 +1,7 @@
 package com.jobtrackai.jobtrack_backend.dto;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 public class ApplicationRequest {
@@ -20,6 +21,14 @@ public class ApplicationRequest {
     private List<String> skills;
     private String description;
     private String notes;
+
+    // Interview fields
+    private LocalDate interviewDate;
+    private LocalTime interviewTime;
+    private String interviewType;
+    private String interviewStatus;
+    private String interviewOutcome;
+    private String interviewNotes;
 
     public ApplicationRequest() {
     }
@@ -142,5 +151,55 @@ public class ApplicationRequest {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    // Interview fields
+
+    public LocalDate getInterviewDate() {
+        return interviewDate;
+    }
+
+    public void setInterviewDate(LocalDate interviewDate) {
+        this.interviewDate = interviewDate;
+    }
+
+    public LocalTime getInterviewTime() {
+        return interviewTime;
+    }
+
+    public void setInterviewTime(LocalTime interviewTime) {
+        this.interviewTime = interviewTime;
+    }
+
+    public String getInterviewType() {
+        return interviewType;
+    }
+
+    public void setInterviewType(String interviewType) {
+        this.interviewType = interviewType;
+    }
+
+    public String getInterviewStatus() {
+        return interviewStatus;
+    }
+
+    public void setInterviewStatus(String interviewStatus) {
+        this.interviewStatus = interviewStatus;
+    }
+
+    public String getInterviewOutcome() {
+        return interviewOutcome;
+    }
+
+    public void setInterviewOutcome(String interviewOutcome) {
+        this.interviewOutcome = interviewOutcome;
+    }
+
+    public String getInterviewNotes() {
+        return interviewNotes;
+    }
+
+    public void setInterviewNotes(String interviewNotes) {
+        this.interviewNotes = interviewNotes;
     }
 }

@@ -11,7 +11,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ApplicationService {
@@ -27,46 +26,84 @@ public class ApplicationService {
         this.userRepository = userRepository;
     }
 
-    // CREATE
+    // =========================================================
+    // CREATE APPLICATION
+    // =========================================================
+
     public ApplicationResponse createApplication(ApplicationRequest request) {
 
         User user = getLoggedInUser();
 
-        boolean alreadyExists =
+        boolean duplicate =
                 applicationRepository.existsByCompanyIgnoreCaseAndRoleIgnoreCaseAndUserId(
                         request.getCompany(),
                         request.getRole(),
                         user.getId()
                 );
 
-        if (alreadyExists) {
+        if (duplicate) {
             throw new RuntimeException(
                     "An application for this company and role already exists."
             );
         }
 
-        Application application = new Application();
-
-        application.setCompany(request.getCompany());
-        application.setRole(request.getRole());
-        application.setCity(request.getCity());
-        application.setState(request.getState());
-        application.setJobType(request.getJobType());
-        application.setWorkMode(request.getWorkMode());
-        application.setAppliedDate(request.getAppliedDate());
-        application.setStatus(request.getStatus());
-        application.setSource(request.getSource());
-        application.setJobLink(request.getJobLink());
-        application.setStipend(request.getStipend());
-        application.setExperience(request.getExperience());
-        application.setSkills(
-                request.getSkills() != null
-                        ? request.getSkills()
-                        : List.of()
+        Application application = new Application(
+                request.getCompany(),
+                request.getRole(),
+                request.getCity(),
+                request.getState(),
+                request.getJobType(),
+                request.getWorkMode(),
+                request.getAppliedDate(),
+                request.getStatus(),
+                request.getSource(),
+                request.getJobLink(),
+                request.getStipend(),
+                request.getExperience(),
+                request.getSkills(),
+                request.getDescription(),
+                request.getNotes(),
+                user
         );
-        application.setDescription(request.getDescription());
-        application.setNotes(request.getNotes());
-        application.setUser(user);
+
+        /*
+         * Only store interview data when the application
+         * status is Interview Scheduled.
+         */
+        if ("Interview Scheduled".equalsIgnoreCase(request.getStatus())) {
+
+            application.setInterviewDate(
+                    request.getInterviewDate()
+            );
+
+            application.setInterviewTime(
+                    request.getInterviewTime()
+            );
+
+            application.setInterviewType(
+                    request.getInterviewType()
+            );
+
+            application.setInterviewStatus(
+                    request.getInterviewStatus() != null
+                            ? request.getInterviewStatus()
+                            : "Scheduled"
+            );
+
+            application.setInterviewOutcome(
+                    request.getInterviewOutcome() != null
+                            ? request.getInterviewOutcome()
+                            : "Pending"
+            );
+
+            application.setInterviewNotes(
+                    request.getInterviewNotes()
+            );
+
+            validateInterviewDetails(application);
+        } else {
+            clearInterviewData(application);
+        }
 
         Application savedApplication =
                 applicationRepository.save(application);
@@ -74,7 +111,11 @@ public class ApplicationService {
         return mapToResponse(savedApplication);
     }
 
-    // GET ALL APPLICATIONS FOR LOGGED-IN USER
+
+    // =========================================================
+    // GET ALL APPLICATIONS
+    // =========================================================
+
     public List<ApplicationResponse> getAllApplications() {
 
         User user = getLoggedInUser();
@@ -83,26 +124,38 @@ public class ApplicationService {
                 .findByUserIdOrderByAppliedDateDesc(user.getId())
                 .stream()
                 .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    // GET ONE APPLICATION
+
+    // =========================================================
+    // GET SINGLE APPLICATION
+    // =========================================================
+
     public ApplicationResponse getApplication(Long applicationId) {
 
         User user = getLoggedInUser();
 
         Application application =
-                applicationRepository.findByIdAndUserId(
-                        applicationId,
-                        user.getId()
-                ).orElseThrow(() ->
-                        new RuntimeException("Application not found.")
-                );
+                applicationRepository
+                        .findByIdAndUserId(
+                                applicationId,
+                                user.getId()
+                        )
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Application not found."
+                                )
+                        );
 
         return mapToResponse(application);
     }
 
-    // UPDATE
+
+    // =========================================================
+    // UPDATE APPLICATION
+    // =========================================================
+
     public ApplicationResponse updateApplication(
             Long applicationId,
             ApplicationRequest request
@@ -111,12 +164,20 @@ public class ApplicationService {
         User user = getLoggedInUser();
 
         Application application =
-                applicationRepository.findByIdAndUserId(
-                        applicationId,
-                        user.getId()
-                ).orElseThrow(() ->
-                        new RuntimeException("Application not found.")
-                );
+                applicationRepository
+                        .findByIdAndUserId(
+                                applicationId,
+                                user.getId()
+                        )
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Application not found."
+                                )
+                        );
+
+        // -----------------------------------------------------
+        // Update normal application fields
+        // -----------------------------------------------------
 
         application.setCompany(request.getCompany());
         application.setRole(request.getRole());
@@ -130,13 +191,65 @@ public class ApplicationService {
         application.setJobLink(request.getJobLink());
         application.setStipend(request.getStipend());
         application.setExperience(request.getExperience());
-        application.setSkills(
-                request.getSkills() != null
-                        ? request.getSkills()
-                        : List.of()
-        );
+        application.setSkills(request.getSkills());
         application.setDescription(request.getDescription());
         application.setNotes(request.getNotes());
+
+
+        // -----------------------------------------------------
+        // Interview handling
+        // -----------------------------------------------------
+
+        if ("Interview Scheduled".equalsIgnoreCase(request.getStatus())) {
+
+            /*
+             * Application is still an interview application,
+             * so keep/update the interview data.
+             */
+
+            application.setInterviewDate(
+                    request.getInterviewDate()
+            );
+
+            application.setInterviewTime(
+                    request.getInterviewTime()
+            );
+
+            application.setInterviewType(
+                    request.getInterviewType()
+            );
+
+            application.setInterviewStatus(
+                    request.getInterviewStatus() != null
+                            ? request.getInterviewStatus()
+                            : "Scheduled"
+            );
+
+            application.setInterviewOutcome(
+                    request.getInterviewOutcome() != null
+                            ? request.getInterviewOutcome()
+                            : "Pending"
+            );
+
+            application.setInterviewNotes(
+                    request.getInterviewNotes()
+            );
+
+            validateInterviewDetails(application);
+
+        } else {
+
+            /*
+             * IMPORTANT:
+             *
+             * If the application is changed from
+             * "Interview Scheduled" to ANY other status,
+             * completely remove the interview data.
+             */
+
+            clearInterviewData(application);
+        }
+
 
         Application updatedApplication =
                 applicationRepository.save(application);
@@ -144,23 +257,93 @@ public class ApplicationService {
         return mapToResponse(updatedApplication);
     }
 
-    // DELETE
+
+    // =========================================================
+    // DELETE APPLICATION
+    // =========================================================
+
     public void deleteApplication(Long applicationId) {
 
         User user = getLoggedInUser();
 
         Application application =
-                applicationRepository.findByIdAndUserId(
-                        applicationId,
-                        user.getId()
-                ).orElseThrow(() ->
-                        new RuntimeException("Application not found.")
-                );
+                applicationRepository
+                        .findByIdAndUserId(
+                                applicationId,
+                                user.getId()
+                        )
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Application not found."
+                                )
+                        );
 
         applicationRepository.delete(application);
     }
 
+
+    // =========================================================
+    // VALIDATE INTERVIEW DATA
+    // =========================================================
+
+    private void validateInterviewDetails(
+            Application application
+    ) {
+
+        boolean interviewScheduled =
+                "Interview Scheduled".equalsIgnoreCase(
+                        application.getStatus()
+                );
+
+        if (!interviewScheduled) {
+            return;
+        }
+
+        if (application.getInterviewDate() == null ||
+                application.getInterviewTime() == null ||
+                application.getInterviewType() == null ||
+                application.getInterviewType().isBlank()) {
+
+            throw new RuntimeException(
+                    "Interview date, time and type are required."
+            );
+        }
+
+        if (application.getInterviewStatus() == null ||
+                application.getInterviewStatus().isBlank()) {
+
+            application.setInterviewStatus("Scheduled");
+        }
+
+        if (application.getInterviewOutcome() == null ||
+                application.getInterviewOutcome().isBlank()) {
+
+            application.setInterviewOutcome("Pending");
+        }
+    }
+
+
+    // =========================================================
+    // CLEAR INTERVIEW DATA
+    // =========================================================
+
+    private void clearInterviewData(
+            Application application
+    ) {
+
+        application.setInterviewDate(null);
+        application.setInterviewTime(null);
+        application.setInterviewType(null);
+        application.setInterviewStatus(null);
+        application.setInterviewOutcome(null);
+        application.setInterviewNotes(null);
+    }
+
+
+    // =========================================================
     // GET LOGGED-IN USER
+    // =========================================================
+
     private User getLoggedInUser() {
 
         Authentication authentication =
@@ -171,39 +354,122 @@ public class ApplicationService {
         if (authentication == null ||
                 !authentication.isAuthenticated()) {
 
-            throw new RuntimeException("User is not authenticated.");
+            throw new RuntimeException(
+                    "User is not authenticated."
+            );
         }
 
         String email = authentication.getName();
 
-        return userRepository.findByEmail(email)
+        return userRepository
+                .findByEmail(email)
                 .orElseThrow(() ->
-                        new RuntimeException("User not found.")
+                        new RuntimeException(
+                                "User not found."
+                        )
                 );
     }
 
-    // ENTITY -> RESPONSE DTO
+
+    // =========================================================
+    // MAP APPLICATION → RESPONSE
+    // =========================================================
+
     private ApplicationResponse mapToResponse(
             Application application
     ) {
 
-        return new ApplicationResponse(
-                application.getId(),
-                application.getCompany(),
-                application.getRole(),
-                application.getCity(),
-                application.getState(),
-                application.getJobType(),
-                application.getWorkMode(),
-                application.getAppliedDate(),
-                application.getStatus(),
-                application.getSource(),
-                application.getJobLink(),
-                application.getStipend(),
-                application.getExperience(),
-                application.getSkills(),
-                application.getDescription(),
+        ApplicationResponse response =
+                new ApplicationResponse();
+
+        response.setId(application.getId());
+
+        response.setCompany(
+                application.getCompany()
+        );
+
+        response.setRole(
+                application.getRole()
+        );
+
+        response.setCity(
+                application.getCity()
+        );
+
+        response.setState(
+                application.getState()
+        );
+
+        response.setJobType(
+                application.getJobType()
+        );
+
+        response.setWorkMode(
+                application.getWorkMode()
+        );
+
+        response.setAppliedDate(
+                application.getAppliedDate()
+        );
+
+        response.setStatus(
+                application.getStatus()
+        );
+
+        response.setSource(
+                application.getSource()
+        );
+
+        response.setJobLink(
+                application.getJobLink()
+        );
+
+        response.setStipend(
+                application.getStipend()
+        );
+
+        response.setExperience(
+                application.getExperience()
+        );
+
+        response.setSkills(
+                application.getSkills()
+        );
+
+        response.setDescription(
+                application.getDescription()
+        );
+
+        response.setNotes(
                 application.getNotes()
         );
+
+        // Interview data
+
+        response.setInterviewDate(
+                application.getInterviewDate()
+        );
+
+        response.setInterviewTime(
+                application.getInterviewTime()
+        );
+
+        response.setInterviewType(
+                application.getInterviewType()
+        );
+
+        response.setInterviewStatus(
+                application.getInterviewStatus()
+        );
+
+        response.setInterviewOutcome(
+                application.getInterviewOutcome()
+        );
+
+        response.setInterviewNotes(
+                application.getInterviewNotes()
+        );
+
+        return response;
     }
 }

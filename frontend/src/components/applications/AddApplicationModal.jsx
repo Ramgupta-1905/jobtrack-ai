@@ -1,4 +1,4 @@
-import { useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 
 export default function AddApplicationModal({
@@ -6,39 +6,8 @@ export default function AddApplicationModal({
   onClose,
   onAdd,
 }) {
-const [form, setForm] = useState(
-  application || {
-   company: "",
-    role: "",
-    city: "",
-    state: "",
-
-    jobType: "Internship",
-    workMode: "Remote",
-    status: "Applied",
-    appliedDate: "",
-
-    source: "LinkedIn",
-    jobLink: "",
-    stipend: "",
-    experience: "",
-
-    skills: "",
-    description: "",
-    notes: "",
-  }
-);
-
-useEffect(() => {
-  if (application) {
-    setForm({
-      ...application,
-      skills: Array.isArray(application.skills)
-        ? application.skills.join(", ")
-        : application.skills,
-    });
-  } else {
-    setForm({
+  const [form, setForm] = useState(
+    application || {
       company: "",
       role: "",
       city: "",
@@ -57,9 +26,55 @@ useEffect(() => {
       skills: "",
       description: "",
       notes: "",
-    });
-  }
-}, [application]);
+
+      // Interview fields
+      interviewDate: "",
+      interviewTime: "",
+      interviewType: "Virtual",
+    }
+  );
+
+  useEffect(() => {
+    if (application) {
+      setForm({
+        ...application,
+        skills: Array.isArray(application.skills)
+          ? application.skills.join(", ")
+          : application.skills || "",
+
+        // Interview fields
+        interviewDate: application.interviewDate || "",
+        interviewTime: application.interviewTime || "",
+        interviewType: application.interviewType || "Virtual",
+      });
+    } else {
+      setForm({
+        company: "",
+        role: "",
+        city: "",
+        state: "",
+
+        jobType: "Internship",
+        workMode: "Remote",
+        status: "Applied",
+        appliedDate: "",
+
+        source: "LinkedIn",
+        jobLink: "",
+        stipend: "",
+        experience: "",
+
+        skills: "",
+        description: "",
+        notes: "",
+
+        // Interview fields
+        interviewDate: "",
+        interviewTime: "",
+        interviewType: "Virtual",
+      });
+    }
+  }, [application]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -84,15 +99,30 @@ useEffect(() => {
       return;
     }
 
-onAdd({
-  ...form,
-  skills: form.skills
-    .split(",")
-    .map((skill) => skill.trim())
-    .filter(Boolean),
-});
+    // Interview details are required only
+    // when the application is scheduled for an interview.
+    if (form.status === "Interview Scheduled") {
+      if (
+        !form.interviewDate ||
+        !form.interviewTime ||
+        !form.interviewType
+      ) {
+        alert(
+          "Please fill in the interview date, time, and type."
+        );
+        return;
+      }
+    }
 
-onClose();
+    onAdd({
+      ...form,
+      skills: form.skills
+        .split(",")
+        .map((skill) => skill.trim())
+        .filter(Boolean),
+    });
+
+    onClose();
   };
 
   return (
@@ -100,7 +130,6 @@ onClose();
       <div className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
 
         {/* Header */}
-
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-slate-900">
             {application ? "Edit Application" : "Add Application"}
@@ -120,9 +149,10 @@ onClose();
         >
 
           {/* Company */}
-    <h3 className="border-b border-slate-200 pb-2 text-lg font-semibold text-slate-900">
-  Company Information
-</h3>
+          <h3 className="border-b border-slate-200 pb-2 text-lg font-semibold text-slate-900">
+            Company Information
+          </h3>
+
           <div>
             <label className="mb-1 block text-sm font-medium">
               Company Name
@@ -139,7 +169,6 @@ onClose();
           </div>
 
           {/* Role */}
-
           <div>
             <label className="mb-1 block text-sm font-medium">
               Job Role
@@ -156,7 +185,6 @@ onClose();
           </div>
 
           {/* City State */}
-
           <div className="grid gap-4 md:grid-cols-2">
 
             <div>
@@ -191,11 +219,12 @@ onClose();
 
           </div>
 
-    <h3 className="border-b border-slate-200 pb-2 text-lg font-semibold text-slate-900">
-  Application Details
-</h3>
-          {/* Job Type + Work Mode */}
+          {/* Application Details */}
+          <h3 className="border-b border-slate-200 pb-2 text-lg font-semibold text-slate-900">
+            Application Details
+          </h3>
 
+          {/* Job Type + Work Mode */}
           <div className="grid gap-4 md:grid-cols-2">
 
             <div>
@@ -236,7 +265,6 @@ onClose();
           </div>
 
           {/* Date + Status */}
-
           <div className="grid gap-4 md:grid-cols-2">
 
             <div>
@@ -276,134 +304,201 @@ onClose();
 
           </div>
 
+          {/* Interview Details */}
+          {form.status === "Interview Scheduled" && (
+            <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
+
+              <h3 className="mb-4 border-b border-blue-100 pb-2 text-lg font-semibold text-slate-900">
+                Interview Details
+              </h3>
+
+              <div className="grid gap-4 md:grid-cols-2">
+
+                {/* Interview Date */}
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Interview Date
+                  </label>
+
+                  <input
+                    type="date"
+                    name="interviewDate"
+                    value={form.interviewDate}
+                    onChange={handleChange}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2 outline-none focus:border-blue-500"
+                    required
+                  />
+                </div>
+
+                {/* Interview Time */}
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Interview Time
+                  </label>
+
+                  <input
+                    type="time"
+                    name="interviewTime"
+                    value={form.interviewTime}
+                    onChange={handleChange}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2 outline-none focus:border-blue-500"
+                    required
+                  />
+                </div>
+
+              </div>
+
+              {/* Interview Type */}
+              <div className="mt-4">
+                <label className="mb-1 block text-sm font-medium">
+                  Interview Type
+                </label>
+
+                <select
+                  name="interviewType"
+                  value={form.interviewType}
+                  onChange={handleChange}
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2 outline-none focus:border-blue-500"
+                  required
+                >
+                  <option>Virtual</option>
+                  <option>On-site</option>
+                  <option>Phone Screen</option>
+                  <option>HR</option>
+                  <option>Technical</option>
+                </select>
+              </div>
+
+            </div>
+          )}
+
           {/* Source */}
+          <div>
+            <label className="mb-1 block text-sm font-medium">
+              Application Source
+            </label>
 
-<div>
-  <label className="mb-1 block text-sm font-medium">
-    Application Source
-  </label>
+            <select
+              name="source"
+              value={form.source}
+              onChange={handleChange}
+              className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-blue-500"
+            >
+              <option>LinkedIn</option>
+              <option>Internshala</option>
+              <option>Naukri</option>
+              <option>Wellfound</option>
+              <option>Company Website</option>
+              <option>Referral</option>
+              <option>Other</option>
+            </select>
+          </div>
 
-  <select
-    name="source"
-    value={form.source}
-    onChange={handleChange}
-    className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-blue-500"
-  >
-    <option>LinkedIn</option>
-    <option>Internshala</option>
-    <option>Naukri</option>
-    <option>Wellfound</option>
-    <option>Company Website</option>
-    <option>Referral</option>
-    <option>Other</option>
-  </select>
-</div>
+          {/* Job Information */}
+          <h3 className="border-b border-slate-200 pb-2 text-lg font-semibold text-slate-900">
+            Job Information
+          </h3>
 
-{/* Job Information */}
-<h3 className="border-b border-slate-200 pb-2 text-lg font-semibold text-slate-900">
-  Job Information
-</h3>
+          <div className="grid gap-4 md:grid-cols-2">
 
-<div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-sm font-medium">
+                Job Link
+              </label>
 
-  <div>
-    <label className="mb-1 block text-sm font-medium">
-      Job Link
-    </label>
+              <input
+                type="url"
+                name="jobLink"
+                value={form.jobLink}
+                onChange={handleChange}
+                placeholder="https://..."
+                className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-blue-500"
+              />
+            </div>
 
-    <input
-      type="url"
-      name="jobLink"
-      value={form.jobLink}
-      onChange={handleChange}
-      placeholder="https://..."
-      className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-blue-500"
-    />
-  </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">
+                Salary / Stipend
+              </label>
 
-  <div>
-    <label className="mb-1 block text-sm font-medium">
-      Salary / Stipend
-    </label>
+              <input
+                type="text"
+                name="stipend"
+                value={form.stipend}
+                onChange={handleChange}
+                placeholder="₹50,000/month"
+                className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-blue-500"
+              />
+            </div>
 
-    <input
-      type="text"
-      name="stipend"
-      value={form.stipend}
-      onChange={handleChange}
-      placeholder="₹50,000/month"
-      className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-blue-500"
-    />
-  </div>
+          </div>
 
-</div>
+          <div className="mt-4">
+            <label className="mb-1 block text-sm font-medium">
+              Experience Required
+            </label>
 
-<div className="mt-4">
-  <label className="mb-1 block text-sm font-medium">
-    Experience Required
-  </label>
+            <input
+              type="text"
+              name="experience"
+              value={form.experience}
+              onChange={handleChange}
+              placeholder="0-1 Years"
+              className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-blue-500"
+            />
+          </div>
 
-  <input
-    type="text"
-    name="experience"
-    value={form.experience}
-    onChange={handleChange}
-    placeholder="0-1 Years"
-    className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-blue-500"
-  />
-</div>
+          {/* Additional Information */}
+          <h3 className="border-b border-slate-200 pb-2 text-lg font-semibold text-slate-900">
+            Additional Information
+          </h3>
 
-<h3 className="border-b border-slate-200 pb-2 text-lg font-semibold text-slate-900">
-  Additional Information
-</h3>
+          <div>
+            <label className="mb-1 block text-sm font-medium">
+              Skills Required
+            </label>
 
-<div>
-  <label className="mb-1 block text-sm font-medium">
-    Skills Required
-  </label>
+            <textarea
+              rows={3}
+              name="skills"
+              value={form.skills}
+              onChange={handleChange}
+              placeholder="React, JavaScript, Tailwind CSS..."
+              className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-blue-500"
+            />
+          </div>
 
-  <textarea
-    rows={3}
-    name="skills"
-    value={form.skills}
-    onChange={handleChange}
-    placeholder="React, JavaScript, Tailwind CSS..."
-    className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-blue-500"
-  />
-</div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">
+              Job Description
+            </label>
 
-<div>
-  <label className="mb-1 block text-sm font-medium">
-    Job Description
-  </label>
+            <textarea
+              rows={5}
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              placeholder="Paste the job description here..."
+              className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-blue-500"
+            />
+          </div>
 
-  <textarea
-    rows={5}
-    name="description"
-    value={form.description}
-    onChange={handleChange}
-    placeholder="Paste the job description here..."
-    className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-blue-500"
-  />
-</div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">
+              Personal Notes
+            </label>
 
-<div>
-  <label className="mb-1 block text-sm font-medium">
-    Personal Notes
-  </label>
-
-  <textarea
-    rows={4}
-    name="notes"
-    value={form.notes}
-    onChange={handleChange}
-    placeholder="Add your notes..."
-    className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-blue-500"
-  />
-</div>
+            <textarea
+              rows={4}
+              name="notes"
+              value={form.notes}
+              onChange={handleChange}
+              placeholder="Add your notes..."
+              className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-blue-500"
+            />
+          </div>
 
           {/* Footer */}
-
           <div className="flex justify-end gap-3 pt-4">
 
             <button
