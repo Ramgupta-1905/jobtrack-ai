@@ -9,7 +9,8 @@ export default function AddInterviewModal({
   const [form, setForm] = useState({
     interviewDate: "",
     interviewTime: "",
-    type: "Virtual",
+    interviewMode: "Virtual",
+    interviewType: "Technical",
     status: "Scheduled",
     outcome: "Pending",
     notes: "",
@@ -21,7 +22,8 @@ export default function AddInterviewModal({
     setForm({
       interviewDate: interview.interviewDate || "",
       interviewTime: interview.interviewTime || "",
-      type: interview.type || "Virtual",
+      interviewMode: interview.interviewMode || "Virtual",
+      interviewType: interview.interviewType || "Technical",
       status: interview.status || "Scheduled",
       outcome: interview.outcome || "Pending",
       notes: interview.notes || "",
@@ -43,10 +45,13 @@ export default function AddInterviewModal({
     if (
       !form.interviewDate ||
       !form.interviewTime ||
-      !form.type ||
+      !form.interviewMode ||
+      !form.interviewType ||
       !form.status
     ) {
-      alert("Please fill all required fields.");
+      alert(
+        "Please fill in the interview date, time, mode, and type."
+      );
       return;
     }
 
@@ -128,24 +133,59 @@ export default function AddInterviewModal({
 
           </div>
 
-          {/* Interview Type */}
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
-              Interview Type
-            </label>
+          {/* Interview Mode + Type */}
+          <div className="grid gap-4 md:grid-cols-2">
 
-            <select
-              name="type"
-              value={form.type}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-blue-500"
-            >
-              <option>Virtual</option>
-              <option>On-site</option>
-              <option>Phone Screen</option>
-              <option>HR</option>
-              <option>Technical</option>
-            </select>
+            {/* Interview Mode */}
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">
+                Interview Mode
+              </label>
+
+              <select
+                name="interviewMode"
+                value={form.interviewMode}
+                onChange={handleChange}
+                required
+                className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-blue-500"
+              >
+                <option value="Virtual">
+                  Virtual
+                </option>
+
+                <option value="On-site">
+                  On-site
+                </option>
+
+                <option value="Phone">
+                  Phone
+                </option>
+              </select>
+            </div>
+
+            {/* Interview Type */}
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">
+                Interview Type
+              </label>
+
+              <select
+                name="interviewType"
+                value={form.interviewType}
+                onChange={handleChange}
+                required
+                className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-blue-500"
+              >
+                <option value="HR">
+                  HR
+                </option>
+
+                <option value="Technical">
+                  Technical
+                </option>
+              </select>
+            </div>
+
           </div>
 
           {/* Status */}

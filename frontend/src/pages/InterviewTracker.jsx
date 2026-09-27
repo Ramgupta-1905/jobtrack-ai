@@ -10,6 +10,7 @@ import {
   Monitor,
   FileText,
   Pencil,
+  Phone,
 } from "lucide-react";
 
 import AddInterviewModal from "../components/Interview/AddInterviewModal";
@@ -80,7 +81,9 @@ export default function InterviewTracker() {
       interviewDate: interview.interviewDate,
       interviewTime: interview.interviewTime.slice(0, 5),
 
-      type: interview.type,
+      interviewMode: interview.interviewMode || "Virtual",
+      interviewType: interview.interviewType || "Technical",
+
       status: interview.status,
       outcome: interview.outcome,
       notes: interview.notes || "",
@@ -114,6 +117,8 @@ export default function InterviewTracker() {
     const searchText = [
       interview.company,
       interview.role,
+      interview.interviewMode,
+      interview.interviewType,
       interview.notes,
     ]
       .join(" ")
@@ -208,7 +213,6 @@ export default function InterviewTracker() {
     },
   ];
 
- 
   // Open edit modal
   const handleEditInterview = (interview) => {
     setEditingInterview(interview);
@@ -221,7 +225,8 @@ export default function InterviewTracker() {
       const requestData = {
         interviewDate: interviewData.interviewDate,
         interviewTime: interviewData.interviewTime,
-        type: interviewData.type,
+        interviewMode: interviewData.interviewMode,
+        interviewType: interviewData.interviewType,
         status: interviewData.status,
         outcome: interviewData.outcome || null,
         notes: interviewData.notes || "",
@@ -247,6 +252,7 @@ export default function InterviewTracker() {
       setIsModalOpen(false);
     } catch (error) {
       console.error("Failed to update interview:", error);
+
       alert(
         error.message || "Failed to update interview."
       );
@@ -437,9 +443,19 @@ export default function InterviewTracker() {
                 </span>
 
                 <span className="flex items-center gap-1 rounded-full border bg-white/70 px-3 py-1 text-gray-700 shadow-sm backdrop-blur-sm">
-                  <Monitor className="h-4 w-4" />
+                  {interview.interviewMode === "Phone" ? (
+                    <Phone className="h-4 w-4" />
+                  ) : (
+                    <Monitor className="h-4 w-4" />
+                  )}
 
-                  {interview.type}
+                  {interview.interviewMode}
+                </span>
+
+                <span className="flex items-center gap-1 rounded-full border bg-white/70 px-3 py-1 text-gray-700 shadow-sm backdrop-blur-sm">
+                  <FileText className="h-4 w-4" />
+
+                  {interview.interviewType}
                 </span>
 
               </div>
@@ -505,7 +521,7 @@ export default function InterviewTracker() {
 
                 </div>
 
-                {/* Edit + Delete */}
+                {/* Edit */}
                 <div className="flex items-center gap-1">
 
                   <button
@@ -516,6 +532,7 @@ export default function InterviewTracker() {
                   >
                     <Pencil size={18} />
                   </button>
+
                 </div>
 
               </div>

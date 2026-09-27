@@ -66,8 +66,12 @@ public class InterviewService {
                 request.getInterviewTime()
         );
 
+        application.setInterviewMode(
+                request.getInterviewMode()
+        );
+
         application.setInterviewType(
-                request.getType()
+                request.getInterviewType()
         );
 
         application.setInterviewStatus(
@@ -199,8 +203,12 @@ public class InterviewService {
                 request.getInterviewTime()
         );
 
+        application.setInterviewMode(
+                request.getInterviewMode()
+        );
+
         application.setInterviewType(
-                request.getType()
+                request.getInterviewType()
         );
 
         application.setInterviewStatus(
@@ -305,7 +313,11 @@ public class InterviewService {
                 application.getInterviewTime()
         );
 
-        response.setType(
+        response.setInterviewMode(
+                application.getInterviewMode()
+        );
+
+        response.setInterviewType(
                 application.getInterviewType()
         );
 

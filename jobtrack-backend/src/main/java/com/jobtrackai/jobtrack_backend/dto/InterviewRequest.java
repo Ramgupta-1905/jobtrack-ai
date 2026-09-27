@@ -7,7 +7,10 @@ public class InterviewRequest {
 
     private LocalDate interviewDate;
     private LocalTime interviewTime;
-    private String type;
+
+    private String interviewMode;
+    private String interviewType;
+
     private String status;
     private String outcome;
     private String notes;
@@ -31,12 +34,20 @@ public class InterviewRequest {
         this.interviewTime = interviewTime;
     }
 
-    public String getType() {
-        return type;
+    public String getInterviewMode() {
+        return interviewMode;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setInterviewMode(String interviewMode) {
+        this.interviewMode = interviewMode;
+    }
+
+    public String getInterviewType() {
+        return interviewType;
+    }
+
+    public void setInterviewType(String interviewType) {
+        this.interviewType = interviewType;
     }
 
     public String getStatus() {

@@ -26,10 +26,18 @@ public class ApplicationResponse {
     // Interview details
     private LocalDate interviewDate;
     private LocalTime interviewTime;
+    private String interviewMode;
     private String interviewType;
     private String interviewStatus;
     private String interviewOutcome;
     private String interviewNotes;
+
+    // Assessment details
+    private LocalDate assessmentDate;
+    private String assessmentType;
+
+    // Deadline
+    private LocalDate deadlineDate;
 
     public ApplicationResponse() {
     }
@@ -162,6 +170,8 @@ public class ApplicationResponse {
         this.notes = notes;
     }
 
+    // Interview getters and setters
+
     public LocalDate getInterviewDate() {
         return interviewDate;
     }
@@ -176,6 +186,14 @@ public class ApplicationResponse {
 
     public void setInterviewTime(LocalTime interviewTime) {
         this.interviewTime = interviewTime;
+    }
+
+    public String getInterviewMode() {
+        return interviewMode;
+    }
+
+    public void setInterviewMode(String interviewMode) {
+        this.interviewMode = interviewMode;
     }
 
     public String getInterviewType() {
@@ -208,5 +226,33 @@ public class ApplicationResponse {
 
     public void setInterviewNotes(String interviewNotes) {
         this.interviewNotes = interviewNotes;
+    }
+
+    // Assessment getters and setters
+
+    public LocalDate getAssessmentDate() {
+        return assessmentDate;
+    }
+
+    public void setAssessmentDate(LocalDate assessmentDate) {
+        this.assessmentDate = assessmentDate;
+    }
+
+    public String getAssessmentType() {
+        return assessmentType;
+    }
+
+    public void setAssessmentType(String assessmentType) {
+        this.assessmentType = assessmentType;
+    }
+
+    // Deadline getter and setter
+
+    public LocalDate getDeadlineDate() {
+        return deadlineDate;
+    }
+
+    public void setDeadlineDate(LocalDate deadlineDate) {
+        this.deadlineDate = deadlineDate;
     }
 }

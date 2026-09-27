@@ -93,18 +93,102 @@ function Dashboard() {
 
       /*
        * Needs Attention
+       *
+       * We keep the existing application statuses
+       * and additionally include applications that
+       * have an assessment or assessment deadline.
        */
-      const needsAttention = applications
-        .filter((application) => {
-          return (
-            application.status === "In Review" ||
-            application.status === "Shortlisted" ||
-            application.status === "Interview Scheduled"
-          );
-        })
+      const attentionItems = [];
+
+      applications.forEach((application) => {
+        /*
+         * Interview
+         */
+        if (
+          application.status === "Interview Scheduled" &&
+          application.interviewDate
+        ) {
+          attentionItems.push({
+            ...application,
+            type: "interview",
+            attentionDate: application.interviewDate,
+          });
+        }
+
+        /*
+         * Assessment
+         *
+         * Do not show old assessment information after
+         * the application has moved to an interview.
+         */
+        if (
+          application.assessmentDate &&
+          application.status !== "Interview Scheduled" &&
+          application.status !== "Offer Received" &&
+          application.status !== "Rejected"
+        ) {
+          attentionItems.push({
+            ...application,
+            type: "assessment",
+            attentionDate: application.assessmentDate,
+          });
+        }
+
+        /*
+         * Assessment Deadline
+         */
+        if (
+          application.deadlineDate &&
+          application.status !== "Interview Scheduled" &&
+          application.status !== "Offer Received" &&
+          application.status !== "Rejected"
+        ) {
+          attentionItems.push({
+            ...application,
+            type: "deadline",
+            attentionDate: application.deadlineDate,
+          });
+        }
+
+        /*
+         * Existing application statuses
+         *
+         * These are kept for now because status cleanup
+         * is a separate polishing task.
+         */
+        if (
+          application.status === "In Review" &&
+          !application.assessmentDate &&
+          !application.deadlineDate
+        ) {
+          attentionItems.push({
+            ...application,
+            type: "status",
+            attentionDate: application.appliedDate,
+          });
+        }
+
+        if (
+          application.status === "Shortlisted" &&
+          !application.assessmentDate &&
+          !application.deadlineDate
+        ) {
+          attentionItems.push({
+            ...application,
+            type: "status",
+            attentionDate: application.appliedDate,
+          });
+        }
+      });
+
+      /*
+       * Sort Needs Attention by nearest relevant date
+       */
+      const needsAttention = attentionItems
         .sort(
           (a, b) =>
-            new Date(b.appliedDate) - new Date(a.appliedDate)
+            new Date(`${a.attentionDate}T00:00:00`) -
+            new Date(`${b.attentionDate}T00:00:00`)
         )
         .slice(0, 4);
 
@@ -114,10 +198,44 @@ function Dashboard() {
       const calendarEvents = [];
 
       applications.forEach((application) => {
+
+        /*
+         * Interview
+         */
         if (application.interviewDate) {
           calendarEvents.push({
             date: application.interviewDate,
             type: "interview",
+          });
+        }
+
+        /*
+         * Assessment
+         */
+        if (
+          application.assessmentDate &&
+          application.status !== "Interview Scheduled" &&
+          application.status !== "Offer Received" &&
+          application.status !== "Rejected"
+        ) {
+          calendarEvents.push({
+            date: application.assessmentDate,
+            type: "assessment",
+          });
+        }
+
+        /*
+         * Assessment Deadline
+         */
+        if (
+          application.deadlineDate &&
+          application.status !== "Interview Scheduled" &&
+          application.status !== "Offer Received" &&
+          application.status !== "Rejected"
+        ) {
+          calendarEvents.push({
+            date: application.deadlineDate,
+            type: "deadline",
           });
         }
       });
@@ -125,10 +243,10 @@ function Dashboard() {
       /*
        * Backend Activities
        *
-       * Activities now come directly from:
+       * Activities come directly from:
        * GET /api/activities
        */
-      const recentActivities = activities.slice(0, 5);
+      const recentActivities = activities.slice(0, 4);
 
       /*
        * Set Dashboard Data

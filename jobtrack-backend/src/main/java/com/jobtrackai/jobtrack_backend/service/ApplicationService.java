@@ -10,6 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -69,10 +70,10 @@ public class ApplicationService {
                 user
         );
 
-        /*
-         * Only store interview data when the application
-         * status is Interview Scheduled.
-         */
+        // -----------------------------------------------------
+        // Interview handling
+        // -----------------------------------------------------
+
         if ("Interview Scheduled".equalsIgnoreCase(request.getStatus())) {
 
             application.setInterviewDate(
@@ -81,6 +82,10 @@ public class ApplicationService {
 
             application.setInterviewTime(
                     request.getInterviewTime()
+            );
+
+            application.setInterviewMode(
+                    request.getInterviewMode()
             );
 
             application.setInterviewType(
@@ -109,6 +114,30 @@ public class ApplicationService {
             clearInterviewData(application);
         }
 
+        // -----------------------------------------------------
+        // Assessment handling
+        // -----------------------------------------------------
+
+        if ("Assessment".equalsIgnoreCase(request.getStatus())) {
+
+            application.setAssessmentDate(
+                    request.getAssessmentDate()
+            );
+
+            application.setAssessmentType(
+                    request.getAssessmentType()
+            );
+
+            application.setDeadlineDate(
+                    request.getDeadlineDate()
+            );
+
+            validateAssessmentDetails(application);
+
+        } else {
+            clearAssessmentData(application);
+        }
+
         Application savedApplication =
                 applicationRepository.save(application);
 
@@ -122,12 +151,56 @@ public class ApplicationService {
                 "application"
         );
 
+        // Interview activity
         if (savedApplication.getInterviewDate() != null) {
+
             activityService.createActivity(
                     user,
                     "Scheduled an interview with "
                             + savedApplication.getCompany(),
                     "interview"
+            );
+        }
+
+        // Assessment activity
+        if ("Assessment".equalsIgnoreCase(
+                savedApplication.getStatus()
+        )) {
+
+            String assessmentMessage =
+                    savedApplication.getAssessmentType() != null
+                            && !savedApplication
+                            .getAssessmentType()
+                            .isBlank()
+                            ? "Added a "
+                            + savedApplication
+                            .getAssessmentType()
+                            + " assessment for "
+                            + savedApplication.getCompany()
+                            : "Added an assessment for "
+                            + savedApplication.getCompany();
+
+            activityService.createActivity(
+                    user,
+                    assessmentMessage,
+                    "assessment"
+            );
+        }
+
+        // Deadline activity
+        if (
+                "Assessment".equalsIgnoreCase(
+                        savedApplication.getStatus()
+                )
+                        &&
+                        savedApplication.getDeadlineDate() != null
+        ) {
+
+            activityService.createActivity(
+                    user,
+                    "Added an assessment deadline for "
+                            + savedApplication.getCompany(),
+                    "deadline"
             );
         }
 
@@ -219,8 +292,20 @@ public class ApplicationService {
                         ? application.getInterviewTime().toString()
                         : null;
 
+        String oldInterviewMode =
+                application.getInterviewMode();
+
         String oldInterviewType =
                 application.getInterviewType();
+
+        LocalDate oldAssessmentDate =
+                application.getAssessmentDate();
+
+        String oldAssessmentType =
+                application.getAssessmentType();
+
+        LocalDate oldDeadlineDate =
+                application.getDeadlineDate();
 
         // -----------------------------------------------------
         // Update normal application fields
@@ -246,7 +331,9 @@ public class ApplicationService {
         // Interview handling
         // -----------------------------------------------------
 
-        if ("Interview Scheduled".equalsIgnoreCase(request.getStatus())) {
+        if ("Interview Scheduled".equalsIgnoreCase(
+                request.getStatus()
+        )) {
 
             application.setInterviewDate(
                     request.getInterviewDate()
@@ -254,6 +341,10 @@ public class ApplicationService {
 
             application.setInterviewTime(
                     request.getInterviewTime()
+            );
+
+            application.setInterviewMode(
+                    request.getInterviewMode()
             );
 
             application.setInterviewType(
@@ -279,13 +370,33 @@ public class ApplicationService {
             validateInterviewDetails(application);
 
         } else {
-
-            /*
-             * If the application is changed from
-             * Interview Scheduled to ANY other status,
-             * completely remove the interview data.
-             */
             clearInterviewData(application);
+        }
+
+        // -----------------------------------------------------
+        // Assessment handling
+        // -----------------------------------------------------
+
+        if ("Assessment".equalsIgnoreCase(
+                request.getStatus()
+        )) {
+
+            application.setAssessmentDate(
+                    request.getAssessmentDate()
+            );
+
+            application.setAssessmentType(
+                    request.getAssessmentType()
+            );
+
+            application.setDeadlineDate(
+                    request.getDeadlineDate()
+            );
+
+            validateAssessmentDetails(application);
+
+        } else {
+            clearAssessmentData(application);
         }
 
         Application updatedApplication =
@@ -296,13 +407,22 @@ public class ApplicationService {
         // -----------------------------------------------------
 
         boolean statusChanged =
-                !equalsIgnoreCase(oldStatus, updatedApplication.getStatus());
+                !equalsIgnoreCase(
+                        oldStatus,
+                        updatedApplication.getStatus()
+                );
 
         boolean companyChanged =
-                !equalsIgnoreCase(oldCompany, updatedApplication.getCompany());
+                !equalsIgnoreCase(
+                        oldCompany,
+                        updatedApplication.getCompany()
+                );
 
         boolean roleChanged =
-                !equalsIgnoreCase(oldRole, updatedApplication.getRole());
+                !equalsIgnoreCase(
+                        oldRole,
+                        updatedApplication.getRole()
+                );
 
         boolean otherApplicationDetailsChanged =
                 companyChanged || roleChanged;
@@ -332,10 +452,14 @@ public class ApplicationService {
             );
         }
 
-        // Interview was newly added
+        // -----------------------------------------------------
+        // Interview activity
+        // -----------------------------------------------------
+
         boolean hasInterview =
                 updatedApplication.getInterviewDate() != null;
 
+        // Interview was newly added
         if (!hadInterview && hasInterview) {
 
             activityService.createActivity(
@@ -353,21 +477,34 @@ public class ApplicationService {
                         (
                                 !equalsIgnoreCase(
                                         oldInterviewDate,
-                                        updatedApplication.getInterviewDate() != null
-                                                ? updatedApplication.getInterviewDate().toString()
+                                        updatedApplication
+                                                .getInterviewDate() != null
+                                                ? updatedApplication
+                                                .getInterviewDate()
+                                                .toString()
                                                 : null
                                 )
                                         ||
                                         !equalsIgnoreCase(
                                                 oldInterviewTime,
-                                                updatedApplication.getInterviewTime() != null
-                                                        ? updatedApplication.getInterviewTime().toString()
+                                                updatedApplication
+                                                        .getInterviewTime() != null
+                                                        ? updatedApplication
+                                                        .getInterviewTime()
+                                                        .toString()
                                                         : null
                                         )
                                         ||
                                         !equalsIgnoreCase(
+                                                oldInterviewMode,
+                                                updatedApplication
+                                                        .getInterviewMode()
+                                        )
+                                        ||
+                                        !equalsIgnoreCase(
                                                 oldInterviewType,
-                                                updatedApplication.getInterviewType()
+                                                updatedApplication
+                                                        .getInterviewType()
                                         )
                         );
 
@@ -378,6 +515,111 @@ public class ApplicationService {
                     "Updated the interview with "
                             + updatedApplication.getCompany(),
                     "interview"
+            );
+        }
+
+        // -----------------------------------------------------
+        // Assessment activity
+        // -----------------------------------------------------
+
+        boolean isAssessment =
+                "Assessment".equalsIgnoreCase(
+                        updatedApplication.getStatus()
+                );
+
+        boolean hadAssessment =
+                oldAssessmentDate != null;
+
+        boolean hasAssessment =
+                isAssessment &&
+                        updatedApplication.getAssessmentDate() != null;
+
+        boolean assessmentAdded =
+                !hadAssessment &&
+                        hasAssessment;
+
+        boolean assessmentChanged =
+                hadAssessment &&
+                        hasAssessment &&
+                        (
+                                !oldAssessmentDate.equals(
+                                        updatedApplication
+                                                .getAssessmentDate()
+                                )
+                                        ||
+                                        !equalsIgnoreCase(
+                                                oldAssessmentType,
+                                                updatedApplication
+                                                        .getAssessmentType()
+                                        )
+                        );
+
+        if (assessmentAdded) {
+
+            String assessmentMessage =
+                    updatedApplication.getAssessmentType() != null
+                            && !updatedApplication
+                            .getAssessmentType()
+                            .isBlank()
+                            ? "Added a "
+                            + updatedApplication
+                            .getAssessmentType()
+                            + " assessment for "
+                            + updatedApplication.getCompany()
+                            : "Added an assessment for "
+                            + updatedApplication.getCompany();
+
+            activityService.createActivity(
+                    user,
+                    assessmentMessage,
+                    "assessment"
+            );
+
+        } else if (assessmentChanged) {
+
+            activityService.createActivity(
+                    user,
+                    "Updated the assessment for "
+                            + updatedApplication.getCompany(),
+                    "assessment"
+            );
+        }
+
+        // -----------------------------------------------------
+        // Deadline activity
+        // -----------------------------------------------------
+
+        boolean hasDeadline =
+                isAssessment &&
+                        updatedApplication.getDeadlineDate() != null;
+
+        boolean deadlineAdded =
+                oldDeadlineDate == null &&
+                        hasDeadline;
+
+        boolean deadlineChanged =
+                oldDeadlineDate != null &&
+                        hasDeadline &&
+                        !oldDeadlineDate.equals(
+                                updatedApplication.getDeadlineDate()
+                        );
+
+        if (deadlineAdded) {
+
+            activityService.createActivity(
+                    user,
+                    "Added an assessment deadline for "
+                            + updatedApplication.getCompany(),
+                    "deadline"
+            );
+
+        } else if (deadlineChanged) {
+
+            activityService.createActivity(
+                    user,
+                    "Updated the assessment deadline for "
+                            + updatedApplication.getCompany(),
+                    "deadline"
             );
         }
 
@@ -436,11 +678,13 @@ public class ApplicationService {
 
         if (application.getInterviewDate() == null ||
                 application.getInterviewTime() == null ||
+                application.getInterviewMode() == null ||
+                application.getInterviewMode().isBlank() ||
                 application.getInterviewType() == null ||
                 application.getInterviewType().isBlank()) {
 
             throw new RuntimeException(
-                    "Interview date, time and type are required."
+                    "Interview date, time, mode and type are required."
             );
         }
 
@@ -459,6 +703,34 @@ public class ApplicationService {
 
 
     // =========================================================
+    // VALIDATE ASSESSMENT DATA
+    // =========================================================
+
+    private void validateAssessmentDetails(
+            Application application
+    ) {
+
+        boolean assessmentStatus =
+                "Assessment".equalsIgnoreCase(
+                        application.getStatus()
+                );
+
+        if (!assessmentStatus) {
+            return;
+        }
+
+        if (application.getAssessmentType() == null ||
+                application.getAssessmentType().isBlank() ||
+                application.getAssessmentDate() == null) {
+
+            throw new RuntimeException(
+                    "Assessment type and assessment date are required."
+            );
+        }
+    }
+
+
+    // =========================================================
     // CLEAR INTERVIEW DATA
     // =========================================================
 
@@ -468,10 +740,25 @@ public class ApplicationService {
 
         application.setInterviewDate(null);
         application.setInterviewTime(null);
+        application.setInterviewMode(null);
         application.setInterviewType(null);
         application.setInterviewStatus(null);
         application.setInterviewOutcome(null);
         application.setInterviewNotes(null);
+    }
+
+
+    // =========================================================
+    // CLEAR ASSESSMENT DATA
+    // =========================================================
+
+    private void clearAssessmentData(
+            Application application
+    ) {
+
+        application.setAssessmentDate(null);
+        application.setAssessmentType(null);
+        application.setDeadlineDate(null);
     }
 
 
@@ -610,6 +897,10 @@ public class ApplicationService {
                 application.getInterviewTime()
         );
 
+        response.setInterviewMode(
+                application.getInterviewMode()
+        );
+
         response.setInterviewType(
                 application.getInterviewType()
         );
@@ -624,6 +915,22 @@ public class ApplicationService {
 
         response.setInterviewNotes(
                 application.getInterviewNotes()
+        );
+
+        // Assessment data
+
+        response.setAssessmentDate(
+                application.getAssessmentDate()
+        );
+
+        response.setAssessmentType(
+                application.getAssessmentType()
+        );
+
+        // Assessment Deadline
+
+        response.setDeadlineDate(
+                application.getDeadlineDate()
         );
 
         return response;

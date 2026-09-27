@@ -30,7 +30,15 @@ export default function AddApplicationModal({
       // Interview fields
       interviewDate: "",
       interviewTime: "",
-      interviewType: "Virtual",
+      interviewMode: "Virtual",
+      interviewType: "Technical",
+
+      // Assessment fields
+      assessmentDate: "",
+      assessmentType: "",
+
+      // Assessment Deadline
+      deadlineDate: "",
     }
   );
 
@@ -38,6 +46,7 @@ export default function AddApplicationModal({
     if (application) {
       setForm({
         ...application,
+
         skills: Array.isArray(application.skills)
           ? application.skills.join(", ")
           : application.skills || "",
@@ -45,7 +54,15 @@ export default function AddApplicationModal({
         // Interview fields
         interviewDate: application.interviewDate || "",
         interviewTime: application.interviewTime || "",
-        interviewType: application.interviewType || "Virtual",
+        interviewMode: application.interviewMode || "Virtual",
+        interviewType: application.interviewType || "Technical",
+
+        // Assessment fields
+        assessmentDate: application.assessmentDate || "",
+        assessmentType: application.assessmentType || "",
+
+        // Assessment Deadline
+        deadlineDate: application.deadlineDate || "",
       });
     } else {
       setForm({
@@ -71,7 +88,15 @@ export default function AddApplicationModal({
         // Interview fields
         interviewDate: "",
         interviewTime: "",
-        interviewType: "Virtual",
+        interviewMode: "Virtual",
+        interviewType: "Technical",
+
+        // Assessment fields
+        assessmentDate: "",
+        assessmentType: "",
+
+        // Assessment Deadline
+        deadlineDate: "",
       });
     }
   }, [application]);
@@ -79,10 +104,38 @@ export default function AddApplicationModal({
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => {
+      const updatedForm = {
+        ...prev,
+        [name]: value,
+      };
+
+      /*
+       * Clear assessment details when the
+       * application moves away from Assessment.
+       */
+      if (name === "status" && value !== "Assessment") {
+        updatedForm.assessmentType = "";
+        updatedForm.assessmentDate = "";
+        updatedForm.deadlineDate = "";
+      }
+
+      /*
+       * Clear interview details when the
+       * application moves away from Interview Scheduled.
+       */
+      if (
+        name === "status" &&
+        value !== "Interview Scheduled"
+      ) {
+        updatedForm.interviewDate = "";
+        updatedForm.interviewTime = "";
+        updatedForm.interviewMode = "Virtual";
+        updatedForm.interviewType = "Technical";
+      }
+
+      return updatedForm;
+    });
   };
 
   const handleSubmit = (e) => {
@@ -99,16 +152,35 @@ export default function AddApplicationModal({
       return;
     }
 
-    // Interview details are required only
-    // when the application is scheduled for an interview.
+    /*
+     * Interview details are required only
+     * when the application is scheduled for an interview.
+     */
     if (form.status === "Interview Scheduled") {
       if (
         !form.interviewDate ||
         !form.interviewTime ||
+        !form.interviewMode ||
         !form.interviewType
       ) {
         alert(
-          "Please fill in the interview date, time, and type."
+          "Please fill in the interview date, time, mode, and type."
+        );
+        return;
+      }
+    }
+
+    /*
+     * Assessment details are required only
+     * when the application is in Assessment stage.
+     */
+    if (form.status === "Assessment") {
+      if (
+        !form.assessmentType ||
+        !form.assessmentDate
+      ) {
+        alert(
+          "Please provide the assessment type and assessment date."
         );
         return;
       }
@@ -132,7 +204,9 @@ export default function AddApplicationModal({
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-slate-900">
-            {application ? "Edit Application" : "Add Application"}
+            {application
+              ? "Edit Application"
+              : "Add Application"}
           </h2>
 
           <button
@@ -184,7 +258,7 @@ export default function AddApplicationModal({
             />
           </div>
 
-          {/* City State */}
+          {/* City + State */}
           <div className="grid gap-4 md:grid-cols-2">
 
             <div>
@@ -264,7 +338,7 @@ export default function AddApplicationModal({
 
           </div>
 
-          {/* Date + Status */}
+          {/* Applied Date + Status */}
           <div className="grid gap-4 md:grid-cols-2">
 
             <div>
@@ -294,8 +368,7 @@ export default function AddApplicationModal({
                 className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none focus:border-blue-500"
               >
                 <option>Applied</option>
-                <option>In Review</option>
-                <option>Shortlisted</option>
+                <option>Assessment</option>
                 <option>Interview Scheduled</option>
                 <option>Offer Received</option>
                 <option>Rejected</option>
@@ -303,6 +376,99 @@ export default function AddApplicationModal({
             </div>
 
           </div>
+
+          {/* Assessment Details */}
+          {form.status === "Assessment" && (
+            <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
+
+              <h3 className="mb-4 border-b border-blue-100 pb-2 text-lg font-semibold text-slate-900">
+                Assessment Details
+              </h3>
+
+              <div className="grid gap-4 md:grid-cols-2">
+
+                {/* Assessment Type */}
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Assessment Type
+                  </label>
+
+                  <select
+                    name="assessmentType"
+                    value={form.assessmentType}
+                    onChange={handleChange}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2 outline-none focus:border-blue-500"
+                    required
+                  >
+                    <option value="">
+                      Select Assessment
+                    </option>
+
+                    <option value="Coding Assessment">
+                      Coding Assessment
+                    </option>
+
+                    <option value="Aptitude Test">
+                      Aptitude Test
+                    </option>
+
+                    <option value="Technical Assessment">
+                      Technical Assessment
+                    </option>
+
+                    <option value="Assignment">
+                      Assignment
+                    </option>
+
+                    <option value="Online Assessment">
+                      Online Assessment
+                    </option>
+
+                    <option value="Other">
+                      Other
+                    </option>
+                  </select>
+                </div>
+
+                {/* Assessment Date */}
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Assessment Date
+                  </label>
+
+                  <input
+                    type="date"
+                    name="assessmentDate"
+                    value={form.assessmentDate}
+                    onChange={handleChange}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2 outline-none focus:border-blue-500"
+                    required
+                  />
+                </div>
+
+              </div>
+
+              {/* Assessment Deadline */}
+              <div className="mt-4">
+                <label className="mb-1 block text-sm font-medium">
+                  Assessment Deadline
+                </label>
+
+                <input
+                  type="date"
+                  name="deadlineDate"
+                  value={form.deadlineDate}
+                  onChange={handleChange}
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2 outline-none focus:border-blue-500"
+                />
+
+                <p className="mt-1 text-xs text-slate-500">
+                  Add the deadline if the assessment has one.
+                </p>
+              </div>
+
+            </div>
+          )}
 
           {/* Interview Details */}
           {form.status === "Interview Scheduled" && (
@@ -312,6 +478,7 @@ export default function AddApplicationModal({
                 Interview Details
               </h3>
 
+              {/* Date + Time */}
               <div className="grid gap-4 md:grid-cols-2">
 
                 {/* Interview Date */}
@@ -348,25 +515,59 @@ export default function AddApplicationModal({
 
               </div>
 
-              {/* Interview Type */}
-              <div className="mt-4">
-                <label className="mb-1 block text-sm font-medium">
-                  Interview Type
-                </label>
+              {/* Mode + Type */}
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
 
-                <select
-                  name="interviewType"
-                  value={form.interviewType}
-                  onChange={handleChange}
-                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2 outline-none focus:border-blue-500"
-                  required
-                >
-                  <option>Virtual</option>
-                  <option>On-site</option>
-                  <option>Phone Screen</option>
-                  <option>HR</option>
-                  <option>Technical</option>
-                </select>
+                {/* Interview Mode */}
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Interview Mode
+                  </label>
+
+                  <select
+                    name="interviewMode"
+                    value={form.interviewMode}
+                    onChange={handleChange}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2 outline-none focus:border-blue-500"
+                    required
+                  >
+                    <option value="Virtual">
+                      Virtual
+                    </option>
+
+                    <option value="On-site">
+                      On-site
+                    </option>
+
+                    <option value="Phone">
+                      Phone
+                    </option>
+                  </select>
+                </div>
+
+                {/* Interview Type */}
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Interview Type
+                  </label>
+
+                  <select
+                    name="interviewType"
+                    value={form.interviewType}
+                    onChange={handleChange}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2 outline-none focus:border-blue-500"
+                    required
+                  >
+                    <option value="HR">
+                      HR
+                    </option>
+
+                    <option value="Technical">
+                      Technical
+                    </option>
+                  </select>
+                </div>
+
               </div>
 
             </div>
@@ -513,7 +714,9 @@ export default function AddApplicationModal({
               type="submit"
               className="rounded-xl bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
             >
-              {application ? "Save Changes" : "Add Application"}
+              {application
+                ? "Save Changes"
+                : "Add Application"}
             </button>
 
           </div>

@@ -47,12 +47,22 @@ public class Application {
     private String stipend;
 
     private String experience;
+
+    // Interview fields
     private LocalDate interviewDate;
     private LocalTime interviewTime;
+    private String interviewMode;
     private String interviewType;
     private String interviewStatus;
     private String interviewOutcome;
     private String interviewNotes;
+
+    // Assessment fields
+    private LocalDate assessmentDate;
+    private String assessmentType;
+
+    // Deadline field
+    private LocalDate deadlineDate;
 
     @ElementCollection
     @CollectionTable(
@@ -242,6 +252,9 @@ public class Application {
     public void setUser(User user) {
         this.user = user;
     }
+
+    // Interview getters and setters
+
     public LocalDate getInterviewDate() {
         return interviewDate;
     }
@@ -256,6 +269,14 @@ public class Application {
 
     public void setInterviewTime(LocalTime interviewTime) {
         this.interviewTime = interviewTime;
+    }
+
+    public String getInterviewMode() {
+        return interviewMode;
+    }
+
+    public void setInterviewMode(String interviewMode) {
+        this.interviewMode = interviewMode;
     }
 
     public String getInterviewType() {
@@ -288,5 +309,33 @@ public class Application {
 
     public void setInterviewNotes(String interviewNotes) {
         this.interviewNotes = interviewNotes;
+    }
+
+    // Assessment getters and setters
+
+    public LocalDate getAssessmentDate() {
+        return assessmentDate;
+    }
+
+    public void setAssessmentDate(LocalDate assessmentDate) {
+        this.assessmentDate = assessmentDate;
+    }
+
+    public String getAssessmentType() {
+        return assessmentType;
+    }
+
+    public void setAssessmentType(String assessmentType) {
+        this.assessmentType = assessmentType;
+    }
+
+    // Deadline getter and setter
+
+    public LocalDate getDeadlineDate() {
+        return deadlineDate;
+    }
+
+    public void setDeadlineDate(LocalDate deadlineDate) {
+        this.deadlineDate = deadlineDate;
     }
 }
