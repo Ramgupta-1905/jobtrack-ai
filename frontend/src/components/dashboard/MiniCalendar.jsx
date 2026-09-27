@@ -52,7 +52,7 @@ export default function MiniCalendar({ events = [] }) {
 
   const eventColors = {
     interview: "bg-green-500",
-    assessment: "bg-orange-500",
+    assessment: "bg-blue-500",
     deadline: "bg-red-500",
   };
 

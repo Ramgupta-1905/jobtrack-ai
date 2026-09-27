@@ -1,31 +1,24 @@
+import { CheckCircle2 } from "lucide-react";
+
 export default function NeedsAttention({ tasks = [] }) {
 
-  const getPriorityStyle = (type, status) => {
+  const getPriorityStyle = (type) => {
     switch (type) {
       case "deadline":
         return "bg-red-500";
 
       case "assessment":
-        return "bg-orange-500";
+        return "bg-blue-500";
 
       case "interview":
         return "bg-green-500";
 
       default:
-        switch (status) {
-          case "Shortlisted":
-            return "bg-blue-500";
-
-          case "In Review":
-            return "bg-orange-500";
-
-          default:
-            return "bg-gray-400";
-        }
+        return "bg-gray-400";
     }
   };
 
-  const getTaskTitle = (type, status) => {
+  const getTaskTitle = (type) => {
     switch (type) {
       case "deadline":
         return "Assessment Deadline";
@@ -37,16 +30,7 @@ export default function NeedsAttention({ tasks = [] }) {
         return "Interview Scheduled";
 
       default:
-        switch (status) {
-          case "Shortlisted":
-            return "Application Shortlisted";
-
-          case "In Review":
-            return "Application Under Review";
-
-          default:
-            return "Application Update";
-        }
+        return "Application Update";
     }
   };
 
@@ -99,73 +83,109 @@ export default function NeedsAttention({ tasks = [] }) {
       );
     }
 
-    if (!task.appliedDate) {
-      return "";
-    }
-
-    return new Date(
-      `${task.appliedDate}T00:00:00`
-    ).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-    });
+    return "";
   };
 
+  /*
+   * If an application has an assessment deadline,
+   * show only the deadline and hide the assessment item
+   * for that same application.
+   */
+  const visibleTasks = tasks.filter((task) => {
+    if (task.type !== "assessment") {
+      return true;
+    }
+
+    const hasDeadline = tasks.some(
+      (otherTask) =>
+        otherTask.id === task.id &&
+        otherTask.type === "deadline" &&
+        otherTask.deadlineDate
+    );
+
+    return !hasDeadline;
+  });
+
+  const displayedTasks = visibleTasks.slice(0, 4);
+
   return (
-    <div className="h-full w-full rounded-2xl bg-white p-6 shadow-md">
+    <div className="flex h-full w-full flex-col rounded-2xl bg-white p-6 shadow-md">
 
       {/* Header */}
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">
-          Needs Attention
-        </h2>
+      <div className="mb-5 flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">
+            Needs Attention
+          </h2>
+
+          <p className="mt-1 text-xs text-gray-500">
+            Things that need your attention
+          </p>
+        </div>
       </div>
 
-      <div>
-        {tasks.length === 0 ? (
-          <div className="py-8 text-center">
-            <p className="text-sm text-gray-500">
-              Nothing needs your attention.
+      {/* Content */}
+      <div className="flex flex-1 flex-col">
+
+        {displayedTasks.length === 0 ? (
+          /* Empty State */
+          <div className="flex flex-1 flex-col items-center justify-center py-8 text-center">
+
+            <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-green-50">
+              <CheckCircle2
+                size={23}
+                className="text-green-500"
+              />
+            </div>
+
+            <h3 className="text-sm font-semibold text-gray-800">
+              You're all caught up
+            </h3>
+
+            <p className="mt-1 max-w-[220px] text-xs leading-5 text-gray-500">
+              No applications currently need your attention.
             </p>
+
           </div>
         ) : (
-          tasks.slice(0, 4).map((task, index) => (
-            <div
-              key={`${task.id}-${task.type}-${index}`}
-              className={`flex items-center gap-4 py-3 transition-colors duration-200 hover:bg-gray-50 ${
-                index !== Math.min(tasks.length, 4) - 1
-                  ? "border-b border-gray-200"
-                  : ""
-              }`}
-            >
-              <div className="flex items-center gap-4">
+          <>
+            {/* Tasks */}
+            <div className="space-y-2">
 
-                {/* Priority Dot */}
+              {displayedTasks.map((task, index) => (
                 <div
-                  className={`h-3 w-3 shrink-0 rounded-full ${getPriorityStyle(
-                    task.type,
-                    task.status
-                  )}`}
-                />
+                  key={`${task.id}-${task.type}-${index}`}
+                  className="rounded-xl border border-gray-100 px-3 py-3 transition-colors duration-200 hover:bg-gray-50"
+                >
+                  <div className="flex items-start gap-3">
 
-                {/* Content */}
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-900">
-                    {getTaskTitle(
-                      task.type,
-                      task.status
-                    )}
-                  </h3>
+                    {/* Priority Dot */}
+                    <div
+                      className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${getPriorityStyle(
+                        task.type
+                      )}`}
+                    />
 
-                  <p className="mt-1 text-xs text-gray-500">
-                    {task.company} • {getTime(task)}
-                  </p>
+                    {/* Content */}
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-semibold text-gray-900">
+                        {getTaskTitle(task.type)}
+                      </h3>
+
+                      <p className="mt-1 text-xs text-gray-500">
+                        {task.company} • {getTime(task)}
+                      </p>
+                    </div>
+
+                  </div>
                 </div>
+              ))}
 
-              </div>
             </div>
-          ))
+
+          </>
         )}
+
       </div>
     </div>
   );

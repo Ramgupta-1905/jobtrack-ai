@@ -64,6 +64,8 @@ function Dashboard() {
 
       /*
        * Upcoming Interviews
+       *
+       * Maximum 2 interviews are shown on Dashboard.
        */
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -89,14 +91,18 @@ function Dashboard() {
               `${b.interviewDate}T${b.interviewTime || "00:00"}`
             )
         )
-        .slice(0, 3);
+        .slice(0, 2);
 
       /*
        * Needs Attention
        *
-       * We keep the existing application statuses
-       * and additionally include applications that
-       * have an assessment or assessment deadline.
+       * Only current application events are shown:
+       * - Interview
+       * - Assessment
+       * - Assessment Deadline
+       *
+       * If an assessment has a deadline,
+       * only the deadline is shown.
        */
       const attentionItems = [];
 
@@ -116,28 +122,13 @@ function Dashboard() {
         }
 
         /*
-         * Assessment
+         * Assessment Deadline
          *
-         * Do not show old assessment information after
-         * the application has moved to an interview.
+         * If a deadline exists, show the deadline
+         * instead of the assessment date.
          */
         if (
           application.assessmentDate &&
-          application.status !== "Interview Scheduled" &&
-          application.status !== "Offer Received" &&
-          application.status !== "Rejected"
-        ) {
-          attentionItems.push({
-            ...application,
-            type: "assessment",
-            attentionDate: application.assessmentDate,
-          });
-        }
-
-        /*
-         * Assessment Deadline
-         */
-        if (
           application.deadlineDate &&
           application.status !== "Interview Scheduled" &&
           application.status !== "Offer Received" &&
@@ -151,38 +142,30 @@ function Dashboard() {
         }
 
         /*
-         * Existing application statuses
+         * Assessment
          *
-         * These are kept for now because status cleanup
-         * is a separate polishing task.
+         * Show the assessment only when there is
+         * no assessment deadline.
          */
         if (
-          application.status === "In Review" &&
-          !application.assessmentDate &&
-          !application.deadlineDate
+          application.assessmentDate &&
+          !application.deadlineDate &&
+          application.status !== "Interview Scheduled" &&
+          application.status !== "Offer Received" &&
+          application.status !== "Rejected"
         ) {
           attentionItems.push({
             ...application,
-            type: "status",
-            attentionDate: application.appliedDate,
-          });
-        }
-
-        if (
-          application.status === "Shortlisted" &&
-          !application.assessmentDate &&
-          !application.deadlineDate
-        ) {
-          attentionItems.push({
-            ...application,
-            type: "status",
-            attentionDate: application.appliedDate,
+            type: "assessment",
+            attentionDate: application.assessmentDate,
           });
         }
       });
 
       /*
        * Sort Needs Attention by nearest relevant date
+       *
+       * Maximum 4 items are shown on Dashboard.
        */
       const needsAttention = attentionItems
         .sort(
@@ -198,7 +181,6 @@ function Dashboard() {
       const calendarEvents = [];
 
       applications.forEach((application) => {
-
         /*
          * Interview
          */
@@ -243,10 +225,9 @@ function Dashboard() {
       /*
        * Backend Activities
        *
-       * Activities come directly from:
-       * GET /api/activities
+       * Maximum 3 activities are shown on Dashboard.
        */
-      const recentActivities = activities.slice(0, 4);
+      const recentActivities = activities.slice(0, 3);
 
       /*
        * Set Dashboard Data

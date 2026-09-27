@@ -49,6 +49,7 @@ export default function UpcomingInterviews({
     const [hours, minutes] = time.split(":");
 
     const date = new Date();
+
     date.setHours(
       Number(hours),
       Number(minutes),
@@ -63,7 +64,7 @@ export default function UpcomingInterviews({
   };
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+    <div className="flex h-full w-full flex-col rounded-2xl border border-gray-100 bg-white p-6 shadow-md">
 
       {/* Header */}
       <div className="mb-5 flex items-center justify-between">
@@ -72,68 +73,91 @@ export default function UpcomingInterviews({
             Upcoming Interviews
           </h2>
 
-          <p className="text-xs text-gray-500">
+          <p className="mt-1 text-xs text-gray-500">
             Don't miss your schedule
           </p>
         </div>
 
-        <CalendarDays
-          size={18}
-          className="text-gray-400"
-        />
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50">
+          <CalendarDays
+            size={18}
+            className="text-blue-500"
+          />
+        </div>
       </div>
 
-      <div className="space-y-4">
+      {/* Content */}
+      <div className="flex flex-1 flex-col">
+
         {interviews.length === 0 ? (
-          <div className="py-8 text-center">
-            <p className="text-sm text-gray-500">
-              No upcoming interviews.
+          /* Empty State */
+          <div className="flex flex-1 flex-col items-center justify-center py-8 text-center">
+
+            <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-blue-50">
+              <CalendarDays
+                size={23}
+                className="text-blue-500"
+              />
+            </div>
+
+            <h3 className="text-sm font-semibold text-gray-800">
+              No upcoming interviews
+            </h3>
+
+            <p className="mt-1 max-w-[220px] text-xs leading-5 text-gray-500">
+              Your scheduled interviews will appear here.
             </p>
+
           </div>
         ) : (
-          interviews.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => navigate("/interviews")}
-              className="cursor-pointer rounded-xl border border-gray-100 p-3 transition hover:border-blue-200 hover:bg-gray-50"
-            >
-              <div className="flex items-center justify-between">
+          /* Interview List */
+          <div className="space-y-3">
+            {interviews.map((item) => (
+              <div
+                key={item.id}
+                onClick={() => navigate("/interviews")}
+                className="cursor-pointer rounded-xl border border-gray-100 p-3 transition hover:border-blue-200 hover:bg-gray-50"
+              >
+                <div className="flex items-center justify-between">
 
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-900">
-                    {item.company}
-                  </h3>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900">
+                      {item.company}
+                    </h3>
 
-                  <p className="text-xs text-gray-500">
-                    {item.interviewType || "Interview"}
-                  </p>
+                    <p className="text-xs text-gray-500">
+                      {item.interviewType || "Interview"}
+                    </p>
+                  </div>
+
+                  <Video
+                    size={17}
+                    className="text-blue-500"
+                  />
                 </div>
 
-                <Video
-                  size={18}
-                  className="text-blue-500"
-                />
+                <div className="mt-3 flex items-center justify-between text-xs">
+
+                  <span className="rounded-full bg-blue-100 px-2 py-1 text-blue-700">
+                    {formatDate(item.interviewDate)}
+                  </span>
+
+                  <span className="font-medium text-gray-600">
+                    {formatTime(item.interviewTime)}
+                  </span>
+
+                </div>
               </div>
-
-              <div className="mt-3 flex items-center justify-between text-xs">
-
-                <span className="rounded-full bg-blue-100 px-2 py-1 text-blue-700">
-                  {formatDate(item.interviewDate)}
-                </span>
-
-                <span className="font-medium text-gray-600">
-                  {formatTime(item.interviewTime)}
-                </span>
-
-              </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
+
       </div>
 
+      {/* View Schedule */}
       <button
         onClick={() => navigate("/interviews")}
-        className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50"
+        className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
       >
         View Schedule
         <ArrowRight size={16} />

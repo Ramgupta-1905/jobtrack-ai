@@ -1,17 +1,22 @@
 import { Briefcase, CircleCheckBig } from "lucide-react";
 
 export default function ActivityFeed({ activities = [] }) {
+
   const getActivityIcon = (type) => {
     if (type === "interview") {
-      return <CircleCheckBig size={18} />;
+      return <CircleCheckBig size={15} />;
     }
 
-    return <Briefcase size={18} />;
+    return <Briefcase size={15} />;
   };
 
   const getActivityColor = (type) => {
     if (type === "interview") {
       return "bg-green-100 text-green-600";
+    }
+
+    if (type === "assessment") {
+      return "bg-blue-100 text-blue-600";
     }
 
     return "bg-blue-100 text-blue-600";
@@ -69,6 +74,14 @@ export default function ActivityFeed({ activities = [] }) {
     });
   };
 
+  /*
+   * Deadline activities are intentionally hidden.
+   * Assessment activities remain visible.
+   */
+  const visibleActivities = activities.filter(
+    (activity) => activity.type !== "deadline"
+  );
+
   return (
     <div className="h-full w-full rounded-2xl bg-white p-6 shadow-md">
 
@@ -87,43 +100,48 @@ export default function ActivityFeed({ activities = [] }) {
 
       {/* Activities */}
       <div>
-        {activities.length === 0 ? (
+        {visibleActivities.length === 0 ? (
           <div className="py-8 text-center">
             <p className="text-sm text-gray-500">
               No activity yet.
             </p>
           </div>
         ) : (
-          activities.slice(0, 4).map((activity, index) => (
-            <div
-              key={activity.id}
-              className={`flex items-center gap-4 py-3 transition-colors duration-200 hover:bg-gray-50 ${
-                index !== Math.min(activities.length, 4) - 1
-                  ? "border-b border-gray-200"
-                  : ""
-              }`}
-            >
-              {/* Icon */}
+          visibleActivities
+            .slice(0, 4)
+            .map((activity, index) => (
               <div
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${getActivityColor(
-                  activity.type
-                )}`}
+                key={activity.id}
+                className={`flex items-center gap-3 py-3 transition-colors duration-200 hover:bg-gray-50 ${
+                  index !==
+                  Math.min(visibleActivities.length, 4) - 1
+                    ? "border-b border-gray-200"
+                    : ""
+                }`}
               >
-                {getActivityIcon(activity.type)}
-              </div>
 
-              {/* Activity Text */}
-              <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-gray-900">
-                  {activity.message}
-                </h3>
+                {/* Icon */}
+                <div
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${getActivityColor(
+                    activity.type
+                  )}`}
+                >
+                  {getActivityIcon(activity.type)}
+                </div>
 
-                <p className="mt-1 text-xs text-gray-500">
-                  {formatActivityTime(activity.createdAt)}
-                </p>
+                {/* Activity Text */}
+                <div className="min-w-0">
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    {activity.message}
+                  </h3>
+
+                  <p className="mt-1 text-xs text-gray-500">
+                    {formatActivityTime(activity.createdAt)}
+                  </p>
+                </div>
+
               </div>
-            </div>
-          ))
+            ))
         )}
       </div>
     </div>
