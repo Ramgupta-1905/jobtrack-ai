@@ -66,6 +66,26 @@ public class User {
     @Column(name = "skill")
     private List<String> skills = new ArrayList<>();
 
+    // Notification Preferences
+    @Column(nullable = false)
+    private boolean emailNotifications = false;
+
+    @Column(nullable = false)
+    private boolean interviewReminders = true;
+
+    @Column(nullable = false)
+    private boolean weeklySummary = true;
+
+    @Column(nullable = false)
+    private boolean productUpdates = false;
+
+    // AI Preferences
+    @Column(nullable = false)
+    private String aiResponseStyle = "Balanced";
+
+    @Column(nullable = false)
+    private String aiCommunicationTone = "Professional";
+
     public User() {
     }
 
@@ -155,6 +175,30 @@ public class User {
         return skills;
     }
 
+    public boolean isEmailNotifications() {
+        return emailNotifications;
+    }
+
+    public boolean isInterviewReminders() {
+        return interviewReminders;
+    }
+
+    public boolean isWeeklySummary() {
+        return weeklySummary;
+    }
+
+    public boolean isProductUpdates() {
+        return productUpdates;
+    }
+
+    public String getAiResponseStyle() {
+        return aiResponseStyle;
+    }
+
+    public String getAiCommunicationTone() {
+        return aiCommunicationTone;
+    }
+
     public void setName(String name) {
         this.name = name;
     }
@@ -229,5 +273,29 @@ public class User {
 
     public void setSkills(List<String> skills) {
         this.skills = skills;
+    }
+
+    public void setEmailNotifications(boolean emailNotifications) {
+        this.emailNotifications = emailNotifications;
+    }
+
+    public void setInterviewReminders(boolean interviewReminders) {
+        this.interviewReminders = interviewReminders;
+    }
+
+    public void setWeeklySummary(boolean weeklySummary) {
+        this.weeklySummary = weeklySummary;
+    }
+
+    public void setProductUpdates(boolean productUpdates) {
+        this.productUpdates = productUpdates;
+    }
+
+    public void setAiResponseStyle(String aiResponseStyle) {
+        this.aiResponseStyle = aiResponseStyle;
+    }
+
+    public void setAiCommunicationTone(String aiCommunicationTone) {
+        this.aiCommunicationTone = aiCommunicationTone;
     }
 }

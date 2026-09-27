@@ -1,12 +1,14 @@
-import { useState } from "react";
-import { Palette, Lock, Bell, Cpu, HelpCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Lock, Bell, Cpu, HelpCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import {
+  getSettings,
+  updateSettings,
+  changePassword,
+} from "../services/settingsService";
 
 export default function Settings() {
   const navigate = useNavigate();
-
-  // ✅ Default theme is Light
-  const [theme, setTheme] = useState("light");
 
   const [notifications, setNotifications] = useState({
     email: false,
@@ -18,25 +20,141 @@ export default function Settings() {
   const [aiStyle, setAiStyle] = useState("Balanced");
   const [aiTone, setAiTone] = useState("Professional");
 
-  // 🔒 Password state
+  // Password state
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordMessage, setPasswordMessage] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
-  const handlePasswordUpdate = () => {
-    if (newPassword !== confirmPassword) {
-      setPasswordMessage("❌ New password and Confirm password must match.");
-      return;
+  // Settings state
+  const [settingsLoading, setSettingsLoading] = useState(true);
+
+  // Load saved settings
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const data = await getSettings();
+
+        setNotifications({
+          email: data.emailNotifications,
+          interview: data.interviewReminders,
+          weekly: data.weeklySummary,
+          updates: data.productUpdates,
+        });
+
+        setAiStyle(data.aiResponseStyle);
+        setAiTone(data.aiCommunicationTone);
+      } catch (error) {
+        console.error("Failed to load settings:", error);
+      } finally {
+        setSettingsLoading(false);
+      }
+    };
+
+    loadSettings();
+  }, []);
+
+  // Save notification + AI settings
+  const saveSettings = async (
+    updatedNotifications,
+    updatedAiStyle,
+    updatedAiTone
+  ) => {
+    try {
+      await updateSettings({
+        emailNotifications: updatedNotifications.email,
+        interviewReminders: updatedNotifications.interview,
+        weeklySummary: updatedNotifications.weekly,
+        productUpdates: updatedNotifications.updates,
+        aiResponseStyle: updatedAiStyle,
+        aiCommunicationTone: updatedAiTone,
+      });
+    } catch (error) {
+      console.error("Failed to update settings:", error);
     }
+  };
 
-    if (!newPassword || !currentPassword) {
+  // Notification toggle
+  const handleNotificationChange = (key, value) => {
+    const updatedNotifications = {
+      ...notifications,
+      [key]: value,
+    };
+
+    setNotifications(updatedNotifications);
+
+    saveSettings(
+      updatedNotifications,
+      aiStyle,
+      aiTone
+    );
+  };
+
+  // AI response style
+  const handleAiStyleChange = (value) => {
+    setAiStyle(value);
+
+    saveSettings(
+      notifications,
+      value,
+      aiTone
+    );
+  };
+
+  // AI communication tone
+  const handleAiToneChange = (value) => {
+    setAiTone(value);
+
+    saveSettings(
+      notifications,
+      aiStyle,
+      value
+    );
+  };
+
+  // Change password
+  const handlePasswordUpdate = async () => {
+    setPasswordMessage("");
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
       setPasswordMessage("⚠ Please fill all fields.");
       return;
     }
 
-    setPasswordMessage("✅ Password updated successfully.");
-    // Here you’d call backend API to actually update password
+    if (newPassword !== confirmPassword) {
+      setPasswordMessage(
+        "❌ New password and Confirm password must match."
+      );
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordMessage(
+        "❌ New password must be at least 6 characters."
+      );
+      return;
+    }
+
+    try {
+      setPasswordLoading(true);
+
+      await changePassword(currentPassword, newPassword);
+
+      setPasswordMessage("✅ Password updated successfully.");
+
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error) {
+      console.error("Failed to change password:", error);
+
+      setPasswordMessage(
+        `❌ ${error.message || "Failed to update password."}`
+      );
+    } finally {
+      setPasswordLoading(false);
+    }
   };
 
   return (
@@ -50,39 +168,14 @@ export default function Settings() {
             </h1>
 
             <p className="mt-4 max-w-2xl text-lg text-blue-100">
-              Customize your workspace, manage account security, notifications,
-              and personalize your AI experience.
+              Manage account security, notifications, and personalize your
+              AI experience.
             </p>
           </div>
         </div>
       </div>
 
-      <Card
-        icon={<Palette size={20} />}
-        color="bg-blue-100"
-        title="Appearance"
-        desc="Customize the look and feel of your workspace."
-      >
-        <div className="space-y-3">
-          {["Light", "Dark", "System"].map((option) => (
-            <label
-              key={option}
-              className="flex cursor-pointer items-center gap-3 rounded-xl border border-transparent p-3 transition hover:border-blue-100 hover:bg-blue-50"
-            >
-              <input
-                type="radio"
-                name="theme"
-                value={option.toLowerCase()}
-                checked={theme === option.toLowerCase()}
-                onChange={() => setTheme(option.toLowerCase())}
-              />
-
-              <span className="font-medium text-gray-700">{option}</span>
-            </label>
-          ))}
-        </div>
-      </Card>
-
+      {/* Change Password */}
       <Card
         icon={<Lock size={20} />}
         color="bg-red-100"
@@ -116,9 +209,10 @@ export default function Settings() {
 
           <button
             onClick={handlePasswordUpdate}
-            className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
+            disabled={passwordLoading}
+            className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Update Password
+            {passwordLoading ? "Updating..." : "Update Password"}
           </button>
 
           {passwordMessage && (
@@ -129,70 +223,90 @@ export default function Settings() {
         </div>
       </Card>
 
+      {/* Notifications */}
       <Card
         icon={<Bell size={20} />}
         color="bg-amber-100"
         title="Notifications"
         desc="Control how and when you receive updates."
       >
-        <div className="space-y-2">
-          <Toggle
-            label="Email Updates"
-            enabled={notifications.email}
-            onChange={(val) =>
-              setNotifications({ ...notifications, email: val })
-            }
-          />
+        {settingsLoading ? (
+          <p className="text-sm text-gray-500">
+            Loading notification preferences...
+          </p>
+        ) : (
+          <div className="space-y-2">
+            <Toggle
+              label="Email Updates"
+              enabled={notifications.email}
+              onChange={(val) =>
+                handleNotificationChange("email", val)
+              }
+            />
 
-          <Toggle
-            label="Interview Reminders"
-            enabled={notifications.interview}
-            onChange={(val) =>
-              setNotifications({ ...notifications, interview: val })
-            }
-          />
+            <Toggle
+              label="Interview Reminders"
+              enabled={notifications.interview}
+              onChange={(val) =>
+                handleNotificationChange("interview", val)
+              }
+            />
 
-          <Toggle
-            label="Weekly Summary"
-            enabled={notifications.weekly}
-            onChange={(val) =>
-              setNotifications({ ...notifications, weekly: val })
-            }
-          />
+            <Toggle
+              label="Weekly Summary"
+              enabled={notifications.weekly}
+              onChange={(val) =>
+                handleNotificationChange("weekly", val)
+              }
+            />
 
-          <Toggle
-            label="Product Updates"
-            enabled={notifications.updates}
-            onChange={(val) =>
-              setNotifications({ ...notifications, updates: val })
-            }
-          />
-        </div>
+            <Toggle
+              label="Product Updates"
+              enabled={notifications.updates}
+              onChange={(val) =>
+                handleNotificationChange("updates", val)
+              }
+            />
+          </div>
+        )}
       </Card>
 
+      {/* AI Preferences */}
       <Card
         icon={<Cpu size={20} />}
         color="bg-purple-100"
         title="AI Preferences"
         desc="Personalize how the AI assistant responds."
       >
-        <div className="space-y-6">
-          <Pills
-            label="AI Response Style"
-            options={["Short", "Balanced", "Detailed"]}
-            selected={aiStyle}
-            onSelect={setAiStyle}
-          />
+        {settingsLoading ? (
+          <p className="text-sm text-gray-500">
+            Loading AI preferences...
+          </p>
+        ) : (
+          <div className="space-y-6">
+            <Pills
+              label="AI Response Style"
+              options={["Short", "Balanced", "Detailed"]}
+              selected={aiStyle}
+              onSelect={handleAiStyleChange}
+            />
 
-          <Pills
-            label="Communication Tone"
-            options={["Professional", "Friendly", "Formal", "Creative"]}
-            selected={aiTone}
-            onSelect={setAiTone}
-          />
-        </div>
+            <Pills
+              label="Communication Tone"
+              options={[
+                "Professional",
+                "Friendly",
+                "Formal",
+                "Creative",
+              ]}
+              selected={aiTone}
+              onSelect={handleAiToneChange}
+            />
+          </div>
+        )}
       </Card>
 
+      {/* Help & Support */}
       <Card
         icon={<HelpCircle size={20} />}
         color="bg-green-100"
@@ -257,7 +371,9 @@ function Card({ icon, color, title, desc, children }) {
         </div>
 
         <div>
-          <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
+          <h2 className="text-lg font-semibold text-gray-800">
+            {title}
+          </h2>
 
           {desc && (
             <p className="mt-1 text-sm text-gray-500">{desc}</p>
@@ -294,6 +410,7 @@ function Toggle({ label, enabled, onChange }) {
       <span className="font-medium text-gray-700">{label}</span>
 
       <button
+        type="button"
         onClick={() => onChange(!enabled)}
         className={`flex h-7 w-14 items-center rounded-full p-1 transition ${
           enabled ? "bg-blue-600" : "bg-gray-300"
@@ -312,11 +429,14 @@ function Toggle({ label, enabled, onChange }) {
 function Pills({ label, options, selected, onSelect }) {
   return (
     <div>
-      <p className="mb-3 text-sm font-medium text-gray-700">{label}</p>
+      <p className="mb-3 text-sm font-medium text-gray-700">
+        {label}
+      </p>
 
       <div className="flex flex-wrap gap-3">
         {options.map((option) => (
           <button
+            type="button"
             key={option}
             onClick={() => onSelect(option)}
             className={`rounded-full border px-5 py-2 text-sm font-medium transition ${
