@@ -17,13 +17,16 @@ public class InterviewService {
 
     private final ApplicationRepository applicationRepository;
     private final UserRepository userRepository;
+    private final ActivityService activityService;
 
     public InterviewService(
             ApplicationRepository applicationRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            ActivityService activityService
     ) {
         this.applicationRepository = applicationRepository;
         this.userRepository = userRepository;
+        this.activityService = activityService;
     }
 
     // =========================================================
@@ -38,9 +41,14 @@ public class InterviewService {
         User user = getLoggedInUser();
 
         Application application = applicationRepository
-                .findByIdAndUserId(applicationId, user.getId())
+                .findByIdAndUserId(
+                        applicationId,
+                        user.getId()
+                )
                 .orElseThrow(() ->
-                        new RuntimeException("Application not found.")
+                        new RuntimeException(
+                                "Application not found."
+                        )
                 );
 
         // Make sure this application does not already have interview data
@@ -50,9 +58,17 @@ public class InterviewService {
             );
         }
 
-        application.setInterviewDate(request.getInterviewDate());
-        application.setInterviewTime(request.getInterviewTime());
-        application.setInterviewType(request.getType());
+        application.setInterviewDate(
+                request.getInterviewDate()
+        );
+
+        application.setInterviewTime(
+                request.getInterviewTime()
+        );
+
+        application.setInterviewType(
+                request.getType()
+        );
 
         application.setInterviewStatus(
                 request.getStatus() != null
@@ -66,13 +82,28 @@ public class InterviewService {
                         : "Pending"
         );
 
-        application.setInterviewNotes(request.getNotes());
+        application.setInterviewNotes(
+                request.getNotes()
+        );
 
         // Application status must represent that an interview exists
-        application.setStatus("Interview Scheduled");
+        application.setStatus(
+                "Interview Scheduled"
+        );
 
         Application savedApplication =
                 applicationRepository.save(application);
+
+        // -----------------------------------------------------
+        // ACTIVITY
+        // -----------------------------------------------------
+
+        activityService.createActivity(
+                user,
+                "Scheduled an interview with "
+                        + savedApplication.getCompany(),
+                "interview"
+        );
 
         return mapToResponse(savedApplication);
     }
@@ -87,9 +118,10 @@ public class InterviewService {
         User user = getLoggedInUser();
 
         return applicationRepository
-                .findByUserIdOrderByAppliedDateDesc(user.getId())
+                .findByUserIdOrderByAppliedDateDesc(
+                        user.getId()
+                )
                 .stream()
-                // Only applications having interview data
                 .filter(application ->
                         application.getInterviewDate() != null
                 )
@@ -102,15 +134,23 @@ public class InterviewService {
     // GET SINGLE INTERVIEW
     // =========================================================
 
-    public InterviewResponse getInterview(Long interviewId) {
+    public InterviewResponse getInterview(
+            Long interviewId
+    ) {
 
         User user = getLoggedInUser();
 
-        Application application = applicationRepository
-                .findByIdAndUserId(interviewId, user.getId())
-                .orElseThrow(() ->
-                        new RuntimeException("Application not found.")
-                );
+        Application application =
+                applicationRepository
+                        .findByIdAndUserId(
+                                interviewId,
+                                user.getId()
+                        )
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Application not found."
+                                )
+                        );
 
         if (application.getInterviewDate() == null) {
             throw new RuntimeException(
@@ -133,11 +173,17 @@ public class InterviewService {
 
         User user = getLoggedInUser();
 
-        Application application = applicationRepository
-                .findByIdAndUserId(interviewId, user.getId())
-                .orElseThrow(() ->
-                        new RuntimeException("Application not found.")
-                );
+        Application application =
+                applicationRepository
+                        .findByIdAndUserId(
+                                interviewId,
+                                user.getId()
+                        )
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Application not found."
+                                )
+                        );
 
         if (application.getInterviewDate() == null) {
             throw new RuntimeException(
@@ -145,9 +191,17 @@ public class InterviewService {
             );
         }
 
-        application.setInterviewDate(request.getInterviewDate());
-        application.setInterviewTime(request.getInterviewTime());
-        application.setInterviewType(request.getType());
+        application.setInterviewDate(
+                request.getInterviewDate()
+        );
+
+        application.setInterviewTime(
+                request.getInterviewTime()
+        );
+
+        application.setInterviewType(
+                request.getType()
+        );
 
         application.setInterviewStatus(
                 request.getStatus()
@@ -164,8 +218,20 @@ public class InterviewService {
         Application updatedApplication =
                 applicationRepository.save(application);
 
+        // -----------------------------------------------------
+        // ACTIVITY
+        // -----------------------------------------------------
+
+        activityService.createActivity(
+                user,
+                "Updated the interview with "
+                        + updatedApplication.getCompany(),
+                "interview"
+        );
+
         return mapToResponse(updatedApplication);
     }
+
 
     // =========================================================
     // GET LOGGED-IN USER
@@ -191,7 +257,9 @@ public class InterviewService {
         return userRepository
                 .findByEmail(email)
                 .orElseThrow(() ->
-                        new RuntimeException("User not found.")
+                        new RuntimeException(
+                                "User not found."
+                        )
                 );
     }
 
@@ -213,7 +281,9 @@ public class InterviewService {
          * Interview ID is now the Application ID because
          * interview information lives inside Application.
          */
-        response.setId(application.getId());
+        response.setId(
+                application.getId()
+        );
 
         response.setApplicationId(
                 application.getId()

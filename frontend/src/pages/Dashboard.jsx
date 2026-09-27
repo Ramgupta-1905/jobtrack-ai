@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import WelcomeCard from "../components/dashboard/WelcomeCard";
@@ -10,17 +10,17 @@ import UpcomingInterviews from "../components/dashboard/UpcomingInterview";
 import ActivityFeed from "../components/dashboard/ActivityFeed";
 import AIAssistant from "../components/dashboard/AIAssistant";
 
+import { getApplications } from "../services/applicationService";
+import { getActivities } from "../services/activityService";
+
 function Dashboard() {
   const navigate = useNavigate();
 
-  // Later this object will come from:
-  // GET /api/dashboard
-  const [dashboardData] = useState({
+  const [dashboardData, setDashboardData] = useState({
     user: {
-      id: 1,
-      name: "Ram",
+      id: null,
+      name: "User",
     },
-
     recentApplications: [],
     upcomingInterviews: [],
     needsAttention: [],
@@ -28,8 +28,129 @@ function Dashboard() {
     calendarEvents: [],
   });
 
-  const [loading] = useState(false);
-  const [error] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    loadDashboard();
+  }, []);
+
+  const loadDashboard = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      /*
+       * Fetch applications and activities from backend
+       */
+      const [applications, activities] = await Promise.all([
+        getApplications(),
+        getActivities(),
+      ]);
+
+      const storedUser = JSON.parse(
+        localStorage.getItem("user") || "{}"
+      );
+
+      /*
+       * Recent Applications
+       */
+      const sortedApplications = [...applications].sort(
+        (a, b) =>
+          new Date(b.appliedDate) - new Date(a.appliedDate)
+      );
+
+      const recentApplications = sortedApplications.slice(0, 4);
+
+      /*
+       * Upcoming Interviews
+       */
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const upcomingInterviews = applications
+        .filter((application) => {
+          if (!application.interviewDate) {
+            return false;
+          }
+
+          const interviewDate = new Date(
+            `${application.interviewDate}T00:00:00`
+          );
+
+          return interviewDate >= today;
+        })
+        .sort(
+          (a, b) =>
+            new Date(
+              `${a.interviewDate}T${a.interviewTime || "00:00"}`
+            ) -
+            new Date(
+              `${b.interviewDate}T${b.interviewTime || "00:00"}`
+            )
+        )
+        .slice(0, 3);
+
+      /*
+       * Needs Attention
+       */
+      const needsAttention = applications
+        .filter((application) => {
+          return (
+            application.status === "In Review" ||
+            application.status === "Shortlisted" ||
+            application.status === "Interview Scheduled"
+          );
+        })
+        .sort(
+          (a, b) =>
+            new Date(b.appliedDate) - new Date(a.appliedDate)
+        )
+        .slice(0, 4);
+
+      /*
+       * Calendar Events
+       */
+      const calendarEvents = [];
+
+      applications.forEach((application) => {
+        if (application.interviewDate) {
+          calendarEvents.push({
+            date: application.interviewDate,
+            type: "interview",
+          });
+        }
+      });
+
+      /*
+       * Backend Activities
+       *
+       * Activities now come directly from:
+       * GET /api/activities
+       */
+      const recentActivities = activities.slice(0, 5);
+
+      /*
+       * Set Dashboard Data
+       */
+      setDashboardData({
+        user: {
+          id: storedUser.id || null,
+          name: storedUser.name || "User",
+        },
+        recentApplications,
+        upcomingInterviews,
+        needsAttention,
+        activities: recentActivities,
+        calendarEvents,
+      });
+    } catch (err) {
+      console.error("Dashboard error:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAddApplication = () => {
     navigate("/applications");
@@ -56,9 +177,18 @@ function Dashboard() {
   if (error) {
     return (
       <div className="flex min-h-[80vh] items-center justify-center">
-        <p className="font-medium text-red-500">
-          Failed to load dashboard.
-        </p>
+        <div className="text-center">
+          <p className="font-medium text-red-500">
+            Failed to load dashboard.
+          </p>
+
+          <button
+            onClick={loadDashboard}
+            className="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
@@ -69,14 +199,20 @@ function Dashboard() {
 
         {/* Hero Section */}
         <section className="rounded-3xl bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 p-8 shadow-xl">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.8fr_1fr] items-start">
+          <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1.8fr_1fr]">
+
             <div className="flex flex-col gap-6">
               <WelcomeCard user={dashboardData.user} />
 
-              <AddApplications onClick={handleAddApplication} />
+              <AddApplications
+                onClick={handleAddApplication}
+              />
             </div>
 
-            <MiniCalendar events={dashboardData.calendarEvents} />
+            <MiniCalendar
+              events={dashboardData.calendarEvents}
+            />
+
           </div>
         </section>
 

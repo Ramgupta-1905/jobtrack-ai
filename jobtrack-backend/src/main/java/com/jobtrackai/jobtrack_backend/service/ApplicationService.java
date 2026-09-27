@@ -17,13 +17,16 @@ public class ApplicationService {
 
     private final ApplicationRepository applicationRepository;
     private final UserRepository userRepository;
+    private final ActivityService activityService;
 
     public ApplicationService(
             ApplicationRepository applicationRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            ActivityService activityService
     ) {
         this.applicationRepository = applicationRepository;
         this.userRepository = userRepository;
+        this.activityService = activityService;
     }
 
     // =========================================================
@@ -101,12 +104,32 @@ public class ApplicationService {
             );
 
             validateInterviewDetails(application);
+
         } else {
             clearInterviewData(application);
         }
 
         Application savedApplication =
                 applicationRepository.save(application);
+
+        // -----------------------------------------------------
+        // ACTIVITY
+        // -----------------------------------------------------
+
+        activityService.createActivity(
+                user,
+                "Applied to " + savedApplication.getCompany(),
+                "application"
+        );
+
+        if (savedApplication.getInterviewDate() != null) {
+            activityService.createActivity(
+                    user,
+                    "Scheduled an interview with "
+                            + savedApplication.getCompany(),
+                    "interview"
+            );
+        }
 
         return mapToResponse(savedApplication);
     }
@@ -176,6 +199,30 @@ public class ApplicationService {
                         );
 
         // -----------------------------------------------------
+        // Store old values BEFORE making changes
+        // -----------------------------------------------------
+
+        String oldCompany = application.getCompany();
+        String oldRole = application.getRole();
+        String oldStatus = application.getStatus();
+
+        boolean hadInterview =
+                application.getInterviewDate() != null;
+
+        String oldInterviewDate =
+                application.getInterviewDate() != null
+                        ? application.getInterviewDate().toString()
+                        : null;
+
+        String oldInterviewTime =
+                application.getInterviewTime() != null
+                        ? application.getInterviewTime().toString()
+                        : null;
+
+        String oldInterviewType =
+                application.getInterviewType();
+
+        // -----------------------------------------------------
         // Update normal application fields
         // -----------------------------------------------------
 
@@ -195,17 +242,11 @@ public class ApplicationService {
         application.setDescription(request.getDescription());
         application.setNotes(request.getNotes());
 
-
         // -----------------------------------------------------
         // Interview handling
         // -----------------------------------------------------
 
         if ("Interview Scheduled".equalsIgnoreCase(request.getStatus())) {
-
-            /*
-             * Application is still an interview application,
-             * so keep/update the interview data.
-             */
 
             application.setInterviewDate(
                     request.getInterviewDate()
@@ -240,19 +281,105 @@ public class ApplicationService {
         } else {
 
             /*
-             * IMPORTANT:
-             *
              * If the application is changed from
-             * "Interview Scheduled" to ANY other status,
+             * Interview Scheduled to ANY other status,
              * completely remove the interview data.
              */
-
             clearInterviewData(application);
         }
 
-
         Application updatedApplication =
                 applicationRepository.save(application);
+
+        // -----------------------------------------------------
+        // ACTIVITY
+        // -----------------------------------------------------
+
+        boolean statusChanged =
+                !equalsIgnoreCase(oldStatus, updatedApplication.getStatus());
+
+        boolean companyChanged =
+                !equalsIgnoreCase(oldCompany, updatedApplication.getCompany());
+
+        boolean roleChanged =
+                !equalsIgnoreCase(oldRole, updatedApplication.getRole());
+
+        boolean otherApplicationDetailsChanged =
+                companyChanged || roleChanged;
+
+        // Status changed
+        if (statusChanged) {
+
+            activityService.createActivity(
+                    user,
+                    "Updated "
+                            + updatedApplication.getCompany()
+                            + " application status to "
+                            + updatedApplication.getStatus(),
+                    "application"
+            );
+        }
+
+        // Other application details changed
+        if (otherApplicationDetailsChanged) {
+
+            activityService.createActivity(
+                    user,
+                    "Updated "
+                            + updatedApplication.getCompany()
+                            + " application",
+                    "application"
+            );
+        }
+
+        // Interview was newly added
+        boolean hasInterview =
+                updatedApplication.getInterviewDate() != null;
+
+        if (!hadInterview && hasInterview) {
+
+            activityService.createActivity(
+                    user,
+                    "Scheduled an interview with "
+                            + updatedApplication.getCompany(),
+                    "interview"
+            );
+        }
+
+        // Existing interview was edited
+        boolean interviewChanged =
+                hadInterview &&
+                        hasInterview &&
+                        (
+                                !equalsIgnoreCase(
+                                        oldInterviewDate,
+                                        updatedApplication.getInterviewDate() != null
+                                                ? updatedApplication.getInterviewDate().toString()
+                                                : null
+                                )
+                                        ||
+                                        !equalsIgnoreCase(
+                                                oldInterviewTime,
+                                                updatedApplication.getInterviewTime() != null
+                                                        ? updatedApplication.getInterviewTime().toString()
+                                                        : null
+                                        )
+                                        ||
+                                        !equalsIgnoreCase(
+                                                oldInterviewType,
+                                                updatedApplication.getInterviewType()
+                                        )
+                        );
+
+        if (interviewChanged) {
+
+            activityService.createActivity(
+                    user,
+                    "Updated the interview with "
+                            + updatedApplication.getCompany(),
+                    "interview"
+            );
+        }
 
         return mapToResponse(updatedApplication);
     }
@@ -278,7 +405,15 @@ public class ApplicationService {
                                 )
                         );
 
+        String company = application.getCompany();
+
         applicationRepository.delete(application);
+
+        activityService.createActivity(
+                user,
+                "Deleted " + company + " application",
+                "application"
+        );
     }
 
 
@@ -368,6 +503,27 @@ public class ApplicationService {
                                 "User not found."
                         )
                 );
+    }
+
+
+    // =========================================================
+    // STRING COMPARISON
+    // =========================================================
+
+    private boolean equalsIgnoreCase(
+            String first,
+            String second
+    ) {
+
+        if (first == null && second == null) {
+            return true;
+        }
+
+        if (first == null || second == null) {
+            return false;
+        }
+
+        return first.equalsIgnoreCase(second);
     }
 
 

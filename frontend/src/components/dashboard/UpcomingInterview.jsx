@@ -3,30 +3,68 @@ import {
   Video,
   ArrowRight,
 } from "lucide-react";
+
 import { useNavigate } from "react-router-dom";
 
-const interviews = [
-  {
-    id: 1,
-    company: "Google",
-    role: "Technical Round",
-    date: "Tomorrow",
-    time: "10:00 AM",
-  },
-  {
-    id: 2,
-    company: "Microsoft",
-    role: "HR Interview",
-    date: "Friday",
-    time: "2:30 PM",
-  },
-];
-
-export default function UpcomingInterviews() {
+export default function UpcomingInterviews({
+  interviews = [],
+}) {
   const navigate = useNavigate();
 
+  const formatDate = (date) => {
+    if (!date) return "";
+
+    const interviewDate = new Date(
+      `${date}T00:00:00`
+    );
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    if (
+      interviewDate.getTime() === today.getTime()
+    ) {
+      return "Today";
+    }
+
+    if (
+      interviewDate.getTime() === tomorrow.getTime()
+    ) {
+      return "Tomorrow";
+    }
+
+    return interviewDate.toLocaleDateString("en-IN", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
+  };
+
+  const formatTime = (time) => {
+    if (!time) return "";
+
+    const [hours, minutes] = time.split(":");
+
+    const date = new Date();
+    date.setHours(
+      Number(hours),
+      Number(minutes),
+      0,
+      0
+    );
+
+    return date.toLocaleTimeString("en-IN", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  };
+
   return (
-    <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
+    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+
       {/* Header */}
       <div className="mb-5 flex items-center justify-between">
         <div>
@@ -46,49 +84,61 @@ export default function UpcomingInterviews() {
       </div>
 
       <div className="space-y-4">
-        {interviews.map((item) => (
-          <div
-            key={item.id}
-            onClick={() => navigate("/interviews")}
-            className="cursor-pointer rounded-xl border border-gray-100 p-3 transition hover:border-blue-200 hover:bg-gray-50"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900">
-                  {item.company}
-                </h3>
+        {interviews.length === 0 ? (
+          <div className="py-8 text-center">
+            <p className="text-sm text-gray-500">
+              No upcoming interviews.
+            </p>
+          </div>
+        ) : (
+          interviews.map((item) => (
+            <div
+              key={item.id}
+              onClick={() => navigate("/interviews")}
+              className="cursor-pointer rounded-xl border border-gray-100 p-3 transition hover:border-blue-200 hover:bg-gray-50"
+            >
+              <div className="flex items-center justify-between">
 
-                <p className="text-xs text-gray-500">
-                  {item.role}
-                </p>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    {item.company}
+                  </h3>
+
+                  <p className="text-xs text-gray-500">
+                    {item.interviewType || "Interview"}
+                  </p>
+                </div>
+
+                <Video
+                  size={18}
+                  className="text-blue-500"
+                />
               </div>
 
-              <Video
-                size={18}
-                className="text-blue-500"
-              />
-            </div>
+              <div className="mt-3 flex items-center justify-between text-xs">
 
-            <div className="mt-3 flex items-center justify-between text-xs">
-              <span className="rounded-full bg-blue-100 px-2 py-1 text-blue-700">
-                {item.date}
-              </span>
+                <span className="rounded-full bg-blue-100 px-2 py-1 text-blue-700">
+                  {formatDate(item.interviewDate)}
+                </span>
 
-              <span className="font-medium text-gray-600">
-                {item.time}
-              </span>
+                <span className="font-medium text-gray-600">
+                  {formatTime(item.interviewTime)}
+                </span>
+
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       <button
-  onClick={() => navigate("/interviews")}
-  className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50"
->
-  View Schedule
-  <ArrowRight size={16} />
-</button>
+        onClick={() => navigate("/interviews")}
+        className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50"
+      >
+        View Schedule
+        <ArrowRight size={16} />
+      </button>
+
     </div>
   );
 }
