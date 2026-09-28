@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8080/api/settings";
+const API_URL = "https://jobtrack-ai-4dnt.onrender.com";
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("token");
