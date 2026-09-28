@@ -227,8 +227,8 @@ jobtrack-ai/
 └── README.md
 ```
 
-🚀 Deployment
-
+🚀 ## Deployment
+```text
 JobTrack AI is deployed using a cloud-based production architecture.
 
 Frontend — Vercel
@@ -249,10 +249,10 @@ Render
 Supabase PostgreSQL
 
 The production application operates independently of the developer's local machine.
-
+```
 ---
-🎯 Project Goals
-
+🎯 ## Project Goals
+```text
 JobTrack AI was built with the following goals:
 
 Build a production-style React application
@@ -274,9 +274,9 @@ Planned features include:
 ✉️ AI Cover Letter Generator
 🎤 AI Interview Preparation
 💡 Personalized career suggestions
-
-📚 What I Learned
-
+```
+📚 ## What I Learned
+```text
 Building JobTrack AI helped me gain practical experience with:
 
 React application architecture
@@ -295,10 +295,10 @@ Docker
 Vercel
 Render
 Supabase
-
+```
 ---
-👨‍💻 Author
-
+👨‍💻 ## Author
+```text
 Ram Gupta
 
 B.Tech Computer Science & Engineering Student
@@ -312,3 +312,4 @@ If you find JobTrack AI useful or interesting, consider giving the repository a 
 📄 License
 
 This project is currently intended as a personal portfolio and learning project.
+```
