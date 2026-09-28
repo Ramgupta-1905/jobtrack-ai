@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:8080";
+
 export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState("");
@@ -26,7 +29,7 @@ export default function Signup() {
       setLoading(true);
 
       const response = await fetch(
-        "http://localhost:8080/api/auth/signup",
+        `${API_URL}/api/auth/signup`,
         {
           method: "POST",
           headers: {
@@ -40,15 +43,16 @@ export default function Signup() {
         }
       );
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const data = await response.json();
         throw new Error(data.message || "Signup failed");
       }
 
       navigate("/login");
 
     } catch (error) {
-      setError(error.message);
+      setError(error.message || "Failed to fetch");
     } finally {
       setLoading(false);
     }

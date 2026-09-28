@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:8080";
+
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -19,7 +22,7 @@ export default function Login() {
       setLoading(true);
 
       const response = await fetch(
-        "http://localhost:8080/api/auth/login",
+        `${API_URL}/api/auth/login`,
         {
           method: "POST",
           headers: {
@@ -39,6 +42,7 @@ export default function Login() {
       }
 
       localStorage.setItem("token", data.token);
+
       localStorage.setItem(
         "user",
         JSON.stringify({
@@ -51,7 +55,7 @@ export default function Login() {
       navigate("/dashboard");
 
     } catch (error) {
-      setError(error.message);
+      setError(error.message || "Failed to fetch");
     } finally {
       setLoading(false);
     }
