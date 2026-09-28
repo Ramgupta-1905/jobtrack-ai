@@ -226,7 +226,7 @@ jobtrack-ai/
 │
 └── README.md
 ```
----
+
 🚀 Deployment
 
 JobTrack AI is deployed using a cloud-based production architecture.
@@ -275,7 +275,6 @@ Planned features include:
 🎤 AI Interview Preparation
 💡 Personalized career suggestions
 
----
 📚 What I Learned
 
 Building JobTrack AI helped me gain practical experience with:
@@ -299,14 +298,17 @@ Supabase
 
 ---
 👨‍💻 Author
+
 Ram Gupta
+
 B.Tech Computer Science & Engineering Student
+
 🔗 GitHub: https://github.com/Ramgupta-1905
----
+
 ⭐ Support
 
 If you find JobTrack AI useful or interesting, consider giving the repository a ⭐ on GitHub.
----
+
 📄 License
 
 This project is currently intended as a personal portfolio and learning project.
