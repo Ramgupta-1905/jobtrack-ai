@@ -170,13 +170,15 @@ Supported interview modes:
                          │     Supabase      │
                          │ PostgreSQL DB     │
                          └───────────────────┘
-                         
+
+---
 ## 🔒 Authentication & Security
 
 JobTrack AI uses JWT-based authentication with Spring Security.
 
 The authentication flow is:
 
+```text
 User
   ↓
 Login / Signup
@@ -223,8 +225,10 @@ jobtrack-ai/
 │   └── Dockerfile
 │
 └── README.md
-
+```
+---
 🚀 Deployment
+
 JobTrack AI is deployed using a cloud-based production architecture.
 
 Frontend — Vercel
@@ -246,7 +250,9 @@ Supabase PostgreSQL
 
 The production application operates independently of the developer's local machine.
 
+---
 🎯 Project Goals
+
 JobTrack AI was built with the following goals:
 
 Build a production-style React application
@@ -268,6 +274,8 @@ Planned features include:
 ✉️ AI Cover Letter Generator
 🎤 AI Interview Preparation
 💡 Personalized career suggestions
+
+---
 📚 What I Learned
 
 Building JobTrack AI helped me gain practical experience with:
@@ -289,13 +297,16 @@ Vercel
 Render
 Supabase
 
+---
 👨‍💻 Author
 Ram Gupta
 B.Tech Computer Science & Engineering Student
 🔗 GitHub: https://github.com/Ramgupta-1905
-
+---
 ⭐ Support
-If you find JobTrack AI useful or interesting, consider giving the repository a ⭐ on GitHub.
 
+If you find JobTrack AI useful or interesting, consider giving the repository a ⭐ on GitHub.
+---
 📄 License
+
 This project is currently intended as a personal portfolio and learning project.
