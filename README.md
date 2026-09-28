@@ -227,7 +227,7 @@ jobtrack-ai/
 └── README.md
 ```
 
-🚀 ## Deployment
+## 🚀 Deployment
 ```text
 JobTrack AI is deployed using a cloud-based production architecture.
 
@@ -251,7 +251,7 @@ Supabase PostgreSQL
 The production application operates independently of the developer's local machine.
 ```
 ---
-🎯 ## Project Goals
+## 🎯 Project Goals
 ```text
 JobTrack AI was built with the following goals:
 
@@ -275,7 +275,7 @@ Planned features include:
 🎤 AI Interview Preparation
 💡 Personalized career suggestions
 ```
-📚 ## What I Learned
+## 📚 What I Learned
 ```text
 Building JobTrack AI helped me gain practical experience with:
 
@@ -297,7 +297,7 @@ Render
 Supabase
 ```
 ---
-👨‍💻 ## Author
+## 👨‍💻 Author
 ```text
 Ram Gupta
 
