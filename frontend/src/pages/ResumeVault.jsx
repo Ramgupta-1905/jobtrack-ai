@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import RenameResumeModal from "../components/Resume/RenameResumeModal";
 
-const API_URL = "https://jobtrack-ai-4dnt.onrender.com";
+const API_URL = "https://jobtrack-ai-4dnt.onrender.com/api/resumes";
 
 export default function ResumeVault() {
   const [resumes, setResumes] = useState([]);

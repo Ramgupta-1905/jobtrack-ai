@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const API_URL = "https://jobtrack-ai-4dnt.onrender.com";
+const API_URL = "https://jobtrack-ai-4dnt.onrender.com/api/profile";
 
 const ALL_SKILLS = [
   "Java",
