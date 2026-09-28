@@ -177,7 +177,6 @@ JobTrack AI uses JWT-based authentication with Spring Security.
 
 The authentication flow is:
 
-```text
 User
   ↓
 Login / Signup
