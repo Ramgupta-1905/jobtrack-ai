@@ -224,22 +224,18 @@ jobtrack-ai/
 │   └── Dockerfile
 │
 └── README.md
-🚀 Deployment
 
+🚀 Deployment
 JobTrack AI is deployed using a cloud-based production architecture.
 
 Frontend — Vercel
-
 The React frontend is deployed on Vercel.
-
 🔗 https://jobtrack-ai-chi.vercel.app/
 
 Backend — Render
-
 The Spring Boot backend is deployed on Render using Docker.
 
 Database — Supabase
-
 The production PostgreSQL database is hosted on Supabase.
 
 Production Architecture
@@ -252,7 +248,6 @@ Supabase PostgreSQL
 The production application operates independently of the developer's local machine.
 
 🎯 Project Goals
-
 JobTrack AI was built with the following goals:
 
 Build a production-style React application
@@ -268,7 +263,6 @@ Create a portfolio-ready full-stack project
 The next development phase will focus on AI-powered career assistance.
 
 Planned features include:
-
 🤖 AI Resume / ATS Analysis
 📊 ATS Score
 📝 Job Description Analyzer
@@ -295,17 +289,14 @@ Docker
 Vercel
 Render
 Supabase
+
 👨‍💻 Author
 Ram Gupta
-
 B.Tech Computer Science & Engineering Student
-
 🔗 GitHub: https://github.com/Ramgupta-1905
 
 ⭐ Support
-
 If you find JobTrack AI useful or interesting, consider giving the repository a ⭐ on GitHub.
 
 📄 License
-
 This project is currently intended as a personal portfolio and learning project.
